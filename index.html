@@ -1150,49 +1150,74 @@ let quizAnswered = new Set();
 let histFilter = 'all';
 
 // ─────────────────────────────────────
-//  STORAGE HELPERS (persistent)
+//  STORAGE HELPERS
+//  window.storage が使えない環境（GitHub Pages等）では
+//  localStorageにフォールバック
 // ─────────────────────────────────────
+const useCloudStorage = typeof window.storage !== 'undefined';
+
 async function saveRecord(record) {
+  if (!currentUser) return;
   try {
     const key = `hist:${currentUser}:${Date.now()}`;
-    await window.storage.set(key, JSON.stringify(record));
-  } catch(e) { console.error(e); }
+    if (useCloudStorage) {
+      await window.storage.set(key, JSON.stringify(record));
+    } else {
+      const all = JSON.parse(localStorage.getItem('hist_all') || '[]');
+      all.unshift({...record, _key: key});
+      localStorage.setItem('hist_all', JSON.stringify(all.slice(0, 200)));
+    }
+  } catch(e) { /* silent */ }
 }
 
 async function loadHistory() {
   if (!currentUser) return [];
   try {
-    const res = await window.storage.list(`hist:${currentUser}:`);
-    if (!res || !res.keys) return [];
-    const items = await Promise.all(res.keys.map(async k => {
-      try { const r = await window.storage.get(k); return r ? JSON.parse(r.value) : null; }
-      catch { return null; }
-    }));
-    return items.filter(Boolean).sort((a,b) => new Date(b.date)-new Date(a.date));
+    if (useCloudStorage) {
+      const res = await window.storage.list(`hist:${currentUser}:`);
+      if (!res || !res.keys) return [];
+      const items = await Promise.all(res.keys.map(async k => {
+        try { const r = await window.storage.get(k); return r ? JSON.parse(r.value) : null; }
+        catch { return null; }
+      }));
+      return items.filter(Boolean).sort((a,b) => new Date(b.date)-new Date(a.date));
+    } else {
+      const all = JSON.parse(localStorage.getItem('hist_all') || '[]');
+      return all.filter(h => h._key && h._key.startsWith(`hist:${currentUser}:`));
+    }
   } catch(e) { return []; }
 }
 
 async function updateLeaderboard() {
   if (!currentUser) return;
   try {
-    let totalCorrect = 0;
     const hist = await loadHistory();
-    hist.forEach(h => { if(h.correct) totalCorrect++; });
-    await window.storage.set(`lb:${currentUser}`, JSON.stringify({
-      name: currentUser, score: totalCorrect, date: new Date().toLocaleDateString('ja-JP')
-    }), true);
-  } catch(e) {}
+    const totalCorrect = hist.filter(h => h.correct).length;
+    const entry = JSON.stringify({ name: currentUser, score: totalCorrect, date: new Date().toLocaleDateString('ja-JP') });
+    if (useCloudStorage) {
+      await window.storage.set(`lb:${currentUser}`, entry, true);
+    } else {
+      const lb = JSON.parse(localStorage.getItem('lb_all') || '{}');
+      lb[currentUser] = JSON.parse(entry);
+      localStorage.setItem('lb_all', JSON.stringify(lb));
+    }
+  } catch(e) { /* silent */ }
 }
 
 async function loadLeaderboard() {
   try {
-    const res = await window.storage.list('lb:', true);
-    if (!res || !res.keys) return [];
-    const items = await Promise.all(res.keys.map(async k => {
-      try { const r = await window.storage.get(k, true); return r ? JSON.parse(r.value) : null; }
-      catch { return null; }
-    }));
-    return items.filter(Boolean).sort((a,b) => b.score - a.score);
+    if (useCloudStorage) {
+      const res = await window.storage.list('lb:', true);
+      if (!res || !res.keys) return [];
+      const items = await Promise.all(res.keys.map(async k => {
+        try { const r = await window.storage.get(k, true); return r ? JSON.parse(r.value) : null; }
+        catch { return null; }
+      }));
+      return items.filter(Boolean).sort((a,b) => b.score - a.score);
+    } else {
+      const lb = JSON.parse(localStorage.getItem('lb_all') || '{}');
+      return Object.values(lb).sort((a,b) => b.score - a.score);
+    }
   } catch(e) { return []; }
 }
 
@@ -1250,6 +1275,7 @@ function buildQCard(q, num, prefix) {
     return `<li id="${pid}-o${i}" onclick="selectOpt('${pid}',${i})">`
          + `<span class="opt-lbl">${lbl}</span>${o}</li>`;
   }).join('');
+  const expEsc = encodeURIComponent(q.exp);
   return `
   <div class="q-card" id="${pid}-card">
     <div class="q-head">
@@ -1262,7 +1288,10 @@ function buildQCard(q, num, prefix) {
       <div class="q-text">${q.q}</div>
       <ul class="opts" id="${pid}-opts">${optsHtml}</ul>
       <div class="q-actions">
-        <button class="btn-check" id="${pid}-btn" onclick="checkOpt('${pid}','${q.id}','${q.subject}','${q.type}',${q.correct},'${escExp(q.exp)}')">答え合わせ</button>
+        <button class="btn-check" id="${pid}-btn"
+          data-pid="${pid}" data-qid="${q.id}" data-subject="${q.subject}"
+          data-type="${q.type}" data-correct="${q.correct}" data-exp="${expEsc}"
+          onclick="checkOpt(this)">答え合わせ</button>
       </div>
       <div class="ans-box" id="${pid}-ans"></div>
     </div>
@@ -1279,11 +1308,17 @@ function selectOpt(pid, idx) {
   document.getElementById(pid+'-o'+idx).classList.add('selected');
 }
 
-async function checkOpt(pid, qid, subject, type, correct, exp) {
+async function checkOpt(btn) {
+  const pid     = btn.dataset.pid;
+  const qid     = btn.dataset.qid;
+  const subject = btn.dataset.subject;
+  const type    = btn.dataset.type;
+  const correct = parseInt(btn.dataset.correct);
+  const exp     = decodeURIComponent(btn.dataset.exp);
+
   const opts = document.getElementById(pid+'-opts');
-  const ans = document.getElementById(pid+'-ans');
-  const btn = document.getElementById(pid+'-btn');
-  const sel = opts.querySelector('.selected');
+  const ans  = document.getElementById(pid+'-ans');
+  const sel  = opts.querySelector('.selected');
   if (!sel) { ans.innerHTML='<strong>⚠ 選択肢を選んでください。</strong>'; ans.className='ans-box show'; return; }
 
   const selIdx = parseInt(sel.id.split('-o')[1]);
