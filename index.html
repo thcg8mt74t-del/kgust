@@ -259,21 +259,17 @@ main{max-width:960px;margin:0 auto;padding:28px 18px 60px}
 <div class="admin-panel" id="admin-panel" style="display:none">
   <button class="admin-toggle" onclick="toggleAdmin()">⚙ 管理</button>
   <div class="admin-popup" id="admin-popup">
-    <h4>🔐 管理者設定</h4>
+    <h4>🔐 パスワード管理</h4>
     <div class="admin-row">
       <label>現在の招待パスワード</label>
-      <input type="text" id="admin-cur-pw" readonly style="color:var(--gold)"/>
+      <div id="admin-cur-pw" style="color:var(--gold);font-size:15px;font-weight:700;letter-spacing:2px;padding:4px 0"></div>
     </div>
-    <div class="admin-row">
-      <label>新しい招待パスワードに変更</label>
-      <input type="password" id="admin-new-pw" placeholder="新しいパスワード（4文字以上）"/>
+    <div style="font-size:11px;color:rgba(255,255,255,.4);line-height:1.8;margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.1)">
+      ⚙ パスワードを変更するには<br>
+      HTMLファイル内の<br>
+      <code style="color:var(--gold);font-size:11px">const INVITE_PW = '...'</code><br>
+      を書き換えて再アップロード
     </div>
-    <div class="admin-row">
-      <label>管理者パスワードで認証</label>
-      <input type="password" id="admin-master-pw" placeholder="管理者パスワード"/>
-    </div>
-    <button class="admin-save" onclick="changePassword()">パスワードを更新</button>
-    <div class="admin-msg" id="admin-msg"></div>
   </div>
 </div>
 
@@ -325,31 +321,35 @@ main{max-width:960px;margin:0 auto;padding:28px 18px 60px}
 
 <!-- ===== 新問題チャレンジ ===== -->
 <div class="sec" id="sec-challenge">
-  <h2 class="sec-title"><span class="sec-icon">✨</span>AIが新問題を生成</h2>
-  <div class="info-box"><strong>苦手ジャンルを指定して新しい問題にチャレンジ！</strong> AIが関西外大の出題傾向に合わせた問題を生成します。</div>
+  <h2 class="sec-title"><span class="sec-icon">✨</span>新問題チャレンジ</h2>
+  <div class="info-box"><strong>10セット・計120問を収録。</strong> セットを切り替えて繰り返し挑戦しよう！英語8問・現代文4問 × 10セット。</div>
 
   <div class="gen-panel">
-    <div class="gen-title">⚙ 問題設定</div>
+    <div class="gen-title">📂 セット選択</div>
     <div class="gen-controls">
-      <select class="gen-select" id="gen-subject">
-        <option value="英語長文読解">英語 — 長文読解</option>
-        <option value="英語語法パラフレーズ">英語 — 語法パラフレーズ</option>
-        <option value="英語正誤問題">英語 — 正誤問題</option>
-        <option value="現代文内容理解">現代文 — 内容理解</option>
-        <option value="現代文語彙漢字">現代文 — 語彙・漢字</option>
-        <option value="現代文接続語指示語">現代文 — 接続語・指示語</option>
+      <select class="gen-select" id="chal-set-sel" onchange="loadChalSet(this.value)">
+        <option value="0">セット 1</option>
+        <option value="1">セット 2</option>
+        <option value="2">セット 3</option>
+        <option value="3">セット 4</option>
+        <option value="4">セット 5</option>
+        <option value="5">セット 6</option>
+        <option value="6">セット 7</option>
+        <option value="7">セット 8</option>
+        <option value="8">セット 9</option>
+        <option value="9">セット 10</option>
       </select>
-      <select class="gen-select" id="gen-diff">
-        <option value="標準">標準</option>
-        <option value="やや難">やや難</option>
-        <option value="難">難</option>
-      </select>
-      <button class="btn-gen" id="btn-gen" onclick="generateQuestion()">問題を生成する</button>
+      <button class="btn-gen" onclick="resetChalSet()">🔄 このセットをリセット</button>
     </div>
-    <div class="gen-status" id="gen-status"></div>
+    <div class="gen-status" id="chal-status"></div>
   </div>
 
-  <div id="gen-area"></div>
+  <div class="stats-bar">
+    <div class="stat-item"><div class="lbl">SCORE</div><div class="val" id="chal-score">0 <span>/ 12</span></div></div>
+    <div class="prog-bar"><div class="prog-fill" id="chal-bar"></div></div>
+  </div>
+
+  <div id="chal-cards"></div>
 </div>
 
 <!-- ===== 学習履歴 ===== -->
@@ -412,8 +412,672 @@ main{max-width:960px;margin:0 auto;padding:28px 18px 60px}
 
 <script>
 // ─────────────────────────────────────
-//  DATA — 固定12問
+//  CHALLENGE SETS — 10セット × 12問（英語8・現代文4）
 // ─────────────────────────────────────
+const CHAL_SETS = [
+// ── セット1 ──
+[
+ {id:'s1e1',subject:'英語',type:'長文読解',diff:'標準',
+  passage:'Volunteering has become an important part of modern society. Many people choose to <em>( 1 )</em> their time to help others without expecting payment.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['waste','donate','borrow','charge'],correct:1,
+  exp:'donate（寄付する・提供する）が正解。「時間を提供する」という文脈に合う。waste＝無駄にする、borrow＝借りる、charge＝請求する。'},
+ {id:'s1e2',subject:'英語',type:'パラフレーズ',diff:'標準',
+  passage:'The scientist made a <em>groundbreaking</em> discovery that changed our understanding of the universe.',
+  q:'下線部 "groundbreaking" の意味として最も近いものを選びなさい。',
+  opts:['minor','revolutionary','expected','controversial'],correct:1,
+  exp:'groundbreaking＝「画期的な・革新的な」。B: revolutionary が最も近い。minor＝小さな、expected＝予想された、controversial＝論争的な。'},
+ {id:'s1e3',subject:'英語',type:'内容一致',diff:'標準',
+  passage:'The Mediterranean diet, rich in vegetables, olive oil, and fish, has been linked to lower rates of heart disease. Researchers suggest that the combination of nutrients, rather than any single food, is responsible for the health benefits.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['地中海食は心臓病のリスクを高める','地中海食の健康効果は特定の食品より栄養の組み合わせによる','地中海食は魚と肉を中心とする','研究者は地中海食の効果を否定している'],correct:1,
+  exp:'"the combination of nutrients, rather than any single food" とあり、Bが正解。Aは逆。Cは肉の記述なし。Dも本文と逆。'},
+ {id:'s1e4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'The politician\'s speech was full of <em>rhetoric</em> but lacked concrete proposals.',
+  q:'下線部 "rhetoric" の意味として最も近いものを選びなさい。',
+  opts:['facts','impressive language','data','humour'],correct:1,
+  exp:'rhetoric＝「修辞・美辞麗句（中身のない言葉）」。B: impressive language が最も近い。具体的提案がないという文脈からも判断できる。'},
+ {id:'s1e5',subject:'英語',type:'正誤問題',diff:'標準',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['He has gone to Paris last year.','She is used to living alone.','They made him to leave the room.','I look forward to see you again.'],correct:1,
+  exp:'B: be used to + -ing（〜することに慣れている）の正しい形。A:過去形(went)が正しい。C:make+O+原形→leaveが正しい。D:look forward to+-ing→seeingが正しい。'},
+ {id:'s1e6',subject:'英語',type:'正誤問題',diff:'やや難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['If I would have more time, I would study harder.','She wishes she had taken the opportunity.','He denied to have stolen the money.','They suggested me to apply for the job.'],correct:1,
+  exp:'B: wish+仮定法過去完了（had taken）の正しい形。A:If節にwould不可→hadが正しい。C:deny+-ing→denyingが正しい。D:suggest that S doが正しい。'},
+ {id:'s1e7',subject:'英語',type:'空所補充',diff:'標準',
+  passage:'Despite the heavy rain, the outdoor concert went <em>( 2 )</em> as planned.',
+  q:'空所 ( 2 ) に入る最も適切な語句を選びなさい。',
+  opts:['ahead','away','over','off'],correct:0,
+  exp:'go ahead（予定通り進む）が正解。go away＝立ち去る、go over＝復習する、go off＝爆発する・鳴り響く。'},
+ {id:'s1e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The new law was met with <em>vehement</em> opposition from environmental groups.',
+  q:'下線部 "vehement" の意味として最も近いものを選びなさい。',
+  opts:['mild','passionate','gradual','silent'],correct:1,
+  exp:'vehement＝「激しい・猛烈な」。B: passionate が最も近い。mild＝穏やか（反意語）、gradual＝徐々の、silent＝沈黙した。'},
+ {id:'s1j1',subject:'現代文',type:'内容理解',diff:'標準',
+  passage:'人間は社会的な存在であり、他者との関係の中でアイデンティティを形成する。しかしながら、個人の自律性と社会的な規範との間には、常に緊張関係が存在する。この緊張こそが、自己の成長を促す契機となりうる。',
+  q:'この文章が述べていることとして最も適切なものを選びなさい。',
+  opts:['人間は社会的規範に従うべきだ','個人の自律性と社会規範の緊張が自己成長の契機になりうる','社会的なつながりは個人の自律性を妨げる','アイデンティティは生まれつき決まっている'],correct:1,
+  exp:'末尾の「この緊張こそが、自己の成長を促す契機となりうる」が要旨。アは一方的すぎる。ウ・エは本文に根拠なし。'},
+ {id:'s1j2',subject:'現代文',type:'語彙',diff:'基礎',
+  passage:null,
+  q:'「恣意的」の意味として最も適切なものを選びなさい。',
+  opts:['論理的な根拠に基づいた','自分の思うままで勝手な','社会的に認められた','慎重で計画的な'],correct:1,
+  exp:'恣意的（しいてき）＝自分の好き勝手・気まぐれなさま。評論文で頻繁に使われる語。「恣意的な判断」＝根拠のない勝手な判断。'},
+ {id:'s1j3',subject:'現代文',type:'接続語',diff:'標準',
+  passage:'テクノロジーの進化は私たちの生活を便利にした。（　　）、人と人とが直接顔を合わせる機会が減少し、コミュニケーションの希薄化が問題視されている。',
+  q:'空欄に最も適切な接続語を選びなさい。',
+  opts:['つまり','その結果','しかしその一方で','なぜなら'],correct:2,
+  exp:'前文（便利）と後文（問題）が逆接・対比の関係。「しかしその一方で」が最適。「つまり」は言い換え、「その結果」は順接、「なぜなら」は理由。'},
+ {id:'s1j4',subject:'現代文',type:'語彙',diff:'標準',
+  passage:null,
+  q:'「捨象する」の意味として最も適切なものを選びなさい。',
+  opts:['具体的に説明する','特定の性質を無視・除外して考える','詳細に記録する','比較して優劣をつける'],correct:1,
+  exp:'捨象（しゃしょう）＝抽象化の際に、注目する性質以外を捨て去ること。哲学・論理学の専門用語で評論文頻出。'},
+],
+// ── セット2 ──
+[
+ {id:'s2e1',subject:'英語',type:'長文読解',diff:'標準',
+  passage:'Urban farming is gaining popularity in cities around the world. By growing food on rooftops and in vacant lots, city residents can <em>( 1 )</em> their dependence on distant farms and reduce food transport emissions.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['increase','reduce','maintain','ignore'],correct:1,
+  exp:'reduce（減らす）が正解。都市農業で遠方の農場への「依存を減らす」という文脈に合う。'},
+ {id:'s2e2',subject:'英語',type:'パラフレーズ',diff:'標準',
+  passage:'The company decided to <em>restructure</em> its operations to improve efficiency.',
+  q:'下線部 "restructure" の意味として最も近いものを選びなさい。',
+  opts:['expand','reorganize','abandon','copy'],correct:1,
+  exp:'restructure＝「再編する・組み替える」。B: reorganize が最も近い。expand＝拡大、abandon＝放棄、copy＝模倣。'},
+ {id:'s2e3',subject:'英語',type:'内容一致',diff:'標準',
+  passage:'Sleep deprivation has serious consequences for health. Studies show that people who sleep fewer than six hours a night are more likely to develop obesity, diabetes, and cardiovascular disease. Yet many modern workers sacrifice sleep to meet deadlines.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['6時間以上の睡眠は健康に悪影響を与える','睡眠不足は肥満や糖尿病のリスクを高める','現代の労働者は睡眠を十分にとっている','睡眠と心臓病の関係は証明されていない'],correct:1,
+  exp:'"more likely to develop obesity, diabetes, and cardiovascular disease" とあり、Bが正解。A:逆（6時間未満が問題）。C:逆（睡眠を犠牲にしている）。D:心臓病も言及されている。'},
+ {id:'s2e4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'The charity relies on <em>philanthropic</em> donations to fund its projects.',
+  q:'下線部 "philanthropic" の意味として最も近いものを選びなさい。',
+  opts:['government','charitable','anonymous','regular'],correct:1,
+  exp:'philanthropic＝「博愛的な・慈善的な」。B: charitable が最も近い。philanthropy（慈善活動）から類推できる。'},
+ {id:'s2e5',subject:'英語',type:'正誤問題',diff:'標準',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['The news were shocking to everyone.','Neither answer is correct.','Each of the students have submitted their work.','The committee have reached a decision.'],correct:1,
+  exp:'B: Neither + 単数動詞（is）が正しい。A:newsは不可算名詞→wasが正しい。C:Each of+複数名詞→単数動詞hasが正しい。D:committeeは集合名詞→英国英語ではhaveも可だが通常hasが無難。'},
+ {id:'s2e6',subject:'英語',type:'正誤問題',diff:'やや難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['I regret to tell you that he has failed.','She avoided to meet her ex-boyfriend.','We look forward to hear your response.','He suggested going by the train.'],correct:0,
+  exp:'A: regret to do（〜することを残念に思う）の正しい用法。B:avoid+-ing→meetingが正しい。C:look forward to+-ing→hearingが正しい。D:by the train→by trainが正しい（冠詞不要）。'},
+ {id:'s2e7',subject:'英語',type:'空所補充',diff:'標準',
+  passage:'The professor\'s explanation was so clear that even beginners could <em>( 2 )</em> it easily.',
+  q:'空所 ( 2 ) に入る最も適切な語を選びなさい。',
+  opts:['fail','grasp','avoid','reject'],correct:1,
+  exp:'grasp（理解する）が正解。「初心者でも簡単に理解できた」という文脈に合う。fail＝失敗、avoid＝避ける、reject＝拒否。'},
+ {id:'s2e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The treaty was seen as a <em>pragmatic</em> solution to the long-standing dispute.',
+  q:'下線部 "pragmatic" の意味として最も近いものを選びなさい。',
+  opts:['idealistic','practical','permanent','controversial'],correct:1,
+  exp:'pragmatic＝「実用的な・現実的な」。B: practical が最も近い。idealistic＝理想主義的（対義語）、permanent＝永久的、controversial＝論争的。'},
+ {id:'s2j1',subject:'現代文',type:'内容理解',diff:'標準',
+  passage:'近代以降、自然は人間の支配の対象として捉えられてきた。科学技術の発展はその傾向を加速させ、大規模な環境破壊を引き起こした。今日では、人間と自然の関係を根本から問い直す必要性が叫ばれている。',
+  q:'この文章の主旨として最も適切なものを選びなさい。',
+  opts:['科学技術の発展は環境問題を解決する','人間と自然の関係を根本的に見直すことが求められている','自然は人間が自由に利用してよい資源だ','環境破壊は科学技術とは無関係だ'],correct:1,
+  exp:'末尾の「人間と自然の関係を根本から問い直す必要性」が主旨。A・Cは本文の主張と逆。Dは本文と矛盾。'},
+ {id:'s2j2',subject:'現代文',type:'語彙',diff:'標準',
+  passage:null,
+  q:'「パラダイム」の意味として最も適切なものを選びなさい。',
+  opts:['個人の価値観','ある時代・分野における支配的な考え方・枠組み','科学的な実験方法','社会的な慣習や習慣'],correct:1,
+  exp:'パラダイム（paradigm）＝ある時代や学問分野で支配的な思想の틀・枠組み。クーンの科学革命論で有名。評論文最頻出カタカナ語の一つ。'},
+ {id:'s2j3',subject:'現代文',type:'指示語',diff:'標準',
+  passage:'消費社会においては、モノの価値は使用価値よりも記号価値によって決まるとされる。つまり、人々は機能ではなくブランドや差異のために商品を購入する。<u>このような消費行動</u>は、自己アイデンティティの形成と深く結びついている。',
+  q:'傍線部「このような消費行動」の内容として最も適切なものを選びなさい。',
+  opts:['使用価値に基づいてモノを選ぶ行動','機能よりもブランドや差異のためにモノを買う行動','環境に配慮して消費を控える行動','価格の安いものを選ぶ行動'],correct:1,
+  exp:'直前の「機能ではなくブランドや差異のために商品を購入する」がこの指示語の内容。Aは逆（使用価値ではなく記号価値）。C・Dは本文に根拠なし。'},
+ {id:'s2j4',subject:'現代文',type:'語彙',diff:'基礎',
+  passage:null,
+  q:'「敷衍する」の意味として最も適切なものを選びなさい。',
+  opts:['否定・反論する','詳しく説明し広げる','要約・簡略化する','批判・非難する'],correct:1,
+  exp:'敷衍（ふえん）する＝内容を詳しく説明して広げること。「以上の議論を敷衍すれば〜」のように使われる評論文頻出語。'},
+],
+// ── セット3 ──
+[
+ {id:'s3e1',subject:'英語',type:'長文読解',diff:'標準',
+  passage:'Artificial intelligence is transforming the job market. While some jobs will be <em>( 1 )</em> by automation, new roles requiring human creativity and emotional intelligence are expected to emerge.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['created','displaced','improved','maintained'],correct:1,
+  exp:'displaced（取って代わられる・失われる）が正解。自動化によって「仕事が奪われる」という文脈。create＝作る、improve＝改善、maintain＝維持。'},
+ {id:'s3e2',subject:'英語',type:'パラフレーズ',diff:'標準',
+  passage:'The discovery of the ancient ruins was <em>fortuitous</em> — the archaeologist had stumbled upon them by accident.',
+  q:'下線部 "fortuitous" の意味として最も近いものを選びなさい。',
+  opts:['planned','accidental','unfortunate','significant'],correct:1,
+  exp:'fortuitous＝「偶然の・思いがけない」。B: accidental が最も近い。stumbled upon（偶然出くわした）という文脈からも推測できる。'},
+ {id:'s3e3',subject:'英語',type:'内容一致',diff:'やや難',
+  passage:'The gig economy offers workers flexibility but often lacks benefits such as health insurance and paid leave. Critics argue that without regulation, companies exploit workers by classifying them as independent contractors rather than employees.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['ギグエコノミーは労働者に手厚い福利厚生を提供する','批評家はギグエコノミーが規制なしに労働者を搾取する恐れがあると主張する','企業は労働者を従業員として分類することを好む','ギグエコノミーには柔軟性がない'],correct:1,
+  exp:'"Critics argue that without regulation, companies exploit workers" とあり、Bが正解。A:逆（福利厚生が欠如）。C:逆（independent contractorsとして分類）。D:逆（flexibility があると述べられている）。'},
+ {id:'s3e4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'The government\'s response to the crisis was <em>inadequate</em>, leaving many citizens without support.',
+  q:'下線部 "inadequate" の意味として最も近いものを選びなさい。',
+  opts:['sufficient','insufficient','immediate','creative'],correct:1,
+  exp:'inadequate＝「不十分な・不適切な」。in-（否定）+ adequate（十分な）。B: insufficient が最も近い。sufficient＝十分な（反意語）。'},
+ {id:'s3e5',subject:'英語',type:'正誤問題',diff:'標準',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['I have visited Tokyo three times last year.','By the time she arrived, the meeting had already started.','He is working here since 2010.','They discussed about the problem for hours.'],correct:1,
+  exp:'B: by the time+過去形→過去完了（had started）の正しい用法。A:last yearは過去形visitedが正しい。C:sinceがある→現在完了進行形has been workingが正しい。D:discussは他動詞→aboutは不要。'},
+ {id:'s3e6',subject:'英語',type:'正誤問題',diff:'やや難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['She is taller than any other girl in her class.','He is the most tallest student in the school.','This is more easier than I thought.','Mount Fuji is higher than any mountains in Japan.'],correct:0,
+  exp:'A: than any other+単数名詞の最上級表現の正しい形。B:most+形容詞原級（tallest）→the tallestが正しい。C:more+比較級は不可→easierのみ。D:any other mountainsが正しい（他の山を除く）。'},
+ {id:'s3e7',subject:'英語',type:'空所補充',diff:'標準',
+  passage:'The research team worked around the <em>( 2 )</em> to complete the project before the deadline.',
+  q:'空所 ( 2 ) に入る最も適切な語を選びなさい。',
+  opts:['city','clock','world','table'],correct:1,
+  exp:'work around the clock＝「昼夜を問わず働く・24時間働く」という慣用句。'},
+ {id:'s3e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The author\'s writing style is remarkably <em>lucid</em>, making complex ideas accessible to general readers.',
+  q:'下線部 "lucid" の意味として最も近いものを選びなさい。',
+  opts:['complex','clear','poetic','lengthy'],correct:1,
+  exp:'lucid＝「明快な・わかりやすい」。B: clear が最も近い。複雑なアイデアを一般読者に伝えられるという文脈からも推測できる。'},
+ {id:'s3j1',subject:'現代文',type:'内容理解',diff:'やや難',
+  passage:'「自由」とは何か。それは単に制約がない状態を指すのではない。真の自由とは、自己の内なる欲求や衝動を制御しながら、自律的に行動する能力のことである。この意味において、自由と規律は対立するものではなく、むしろ相互に依存し合う関係にある。',
+  q:'この文章における「自由」の定義として最も適切なものを選びなさい。',
+  opts:['あらゆる制約や規則がない状態','欲求や衝動を制御しながら自律的に行動できる能力','社会的なルールに従って生きること','他者の意見に縛られないこと'],correct:1,
+  exp:'「自己の内なる欲求や衝動を制御しながら、自律的に行動する能力」が筆者の定義。A:筆者が否定している（単に制約がない状態ではない）。C・Dは本文に根拠なし。'},
+ {id:'s3j2',subject:'現代文',type:'語彙',diff:'標準',
+  passage:null,
+  q:'「アイデンティティ」の意味として最も適切なものを選びなさい。',
+  opts:['社会的な地位や名声','自分が何者であるかという同一性・自己認識','外見的な特徴','職業や役割'],correct:1,
+  exp:'アイデンティティ（identity）＝「自己同一性」。「自分とは何者か」という自己認識・連続性のこと。エリクソンの発達心理学で有名な概念。評論頻出語。'},
+ {id:'s3j3',subject:'現代文',type:'接続語',diff:'標準',
+  passage:'読書は語彙力や表現力を高める効果がある。（　　）、他者の思考や感情を追体験することで、共感能力や想像力も鍛えられる。',
+  q:'空欄に最も適切な接続語を選びなさい。',
+  opts:['ところが','したがって','さらに','つまり'],correct:2,
+  exp:'前文（語彙力）と後文（共感能力）は同じ方向の内容を追加している関係。「さらに」（添加）が最適。「ところが」は逆接、「したがって」は結果、「つまり」は言い換え。'},
+ {id:'s3j4',subject:'現代文',type:'語彙',diff:'やや難',
+  passage:null,
+  q:'「アノミー」の意味として最も適切なものを選びなさい。',
+  opts:['社会的連帯の強化','社会的規範の崩壊・無規制状態','個人の道徳的成長','文化間の相互理解'],correct:1,
+  exp:'アノミー（anomie）＝デュルケームが提唱した概念。社会的規範が崩壊し、個人が目標を見失った状態。「anomy（無法）」が語源。現代社会論の評論文に頻出。'},
+],
+// ── セット4 ──
+[
+ {id:'s4e1',subject:'英語',type:'長文読解',diff:'標準',
+  passage:'Ocean plastic pollution has reached alarming levels. Scientists estimate that millions of tons of plastic <em>( 1 )</em> the ocean each year, harming marine life and entering the food chain.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['clean','enter','leave','protect'],correct:1,
+  exp:'enter（入り込む）が正解。「プラスチックが毎年海洋に流入する」という文脈。clean＝きれいにする、leave＝去る、protect＝保護する。'},
+ {id:'s4e2',subject:'英語',type:'パラフレーズ',diff:'標準',
+  passage:'The new medication proved <em>efficacious</em> in clinical trials, reducing symptoms in 80% of patients.',
+  q:'下線部 "efficacious" の意味として最も近いものを選びなさい。',
+  opts:['dangerous','effective','expensive','experimental'],correct:1,
+  exp:'efficacious＝「効果的な・有効な」。B: effective が最も近い。80%の患者で症状が改善されたという文脈からも判断できる。'},
+ {id:'s4e3',subject:'英語',type:'内容一致',diff:'標準',
+  passage:'Bilingualism has cognitive benefits beyond communication. Research suggests that people who speak two languages regularly have better attention control and are more resistant to cognitive decline in old age compared to monolinguals.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['バイリンガルはコミュニケーション以外に認知的恩恵がある','バイリンガルは老化により注意力が低下しやすい','単一言語話者はバイリンガルより記憶力が優れる','バイリンガリズムの研究はまだ行われていない'],correct:0,
+  exp:'"cognitive benefits beyond communication" とあり、Aが正解。B:逆（認知低下に抵抗力がある）。C:逆（単一言語話者と比較してバイリンガルが優れる）。D:本文は研究に言及している。'},
+ {id:'s4e4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'His argument was <em>cogent</em> enough to convince even the most skeptical members of the committee.',
+  q:'下線部 "cogent" の意味として最も近いものを選びなさい。',
+  opts:['weak','persuasive','confusing','lengthy'],correct:1,
+  exp:'cogent＝「説得力のある・論理的に力強い」。B: persuasive が最も近い。懐疑的なメンバーをも説得できたという文脈からも推測できる。'},
+ {id:'s4e5',subject:'英語',type:'正誤問題',diff:'標準',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['The book which I bought it yesterday was expensive.','She told me that she had already finished the report.','He asked where does she live.','I have been waiting since two hours.'],correct:1,
+  exp:'B: 間接話法で時制の一致（had finished）が正しく適用されている。A:関係代名詞の目的格→itは不要。C:間接疑問→where she livesが正しい。D:sinceは起点→for two hoursが正しい。'},
+ {id:'s4e6',subject:'英語',type:'正誤問題',diff:'やや難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['Not until he arrived did the meeting start.','Hardly he had sat down when the phone rang.','No sooner the bell rang than students left.','Scarcely had she finished when the light went out.'],correct:3,
+  exp:'D: scarcely had+S+PP when〜の倒置構文の正しい形。A:Notは正しい→Not until he arrived did（正しい倒置）。B:HardlyはHardly had he sat downが正しい（倒置）。C:No soonerのあとは倒置→No sooner had the bell rung。'},
+ {id:'s4e7',subject:'英語',type:'空所補充',diff:'標準',
+  passage:'The manager asked her team to <em>( 2 )</em> up with a creative solution to the problem.',
+  q:'空所 ( 2 ) に入る最も適切な語を選びなさい。',
+  opts:['come','make','give','put'],correct:0,
+  exp:'come up with＝「（考え・解決策などを）思いつく・提案する」という重要熟語。make up with＝仲直り、give up＝諦める、put up with＝我慢する。'},
+ {id:'s4e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The philosopher\'s ideas were considered <em>heretical</em> by the religious authorities of the time.',
+  q:'下線部 "heretical" の意味として最も近いものを選びなさい。',
+  opts:['orthodox','unacceptable to established beliefs','scientific','popular'],correct:1,
+  exp:'heretical＝「異端的な・正統に反する」。B: unacceptable to established beliefs が最も近い。宗教的権威に対立するという文脈からも推測できる。'},
+ {id:'s4j1',subject:'現代文',type:'内容理解',diff:'標準',
+  passage:'現代社会は「リスク社会」と呼ばれる。科学技術の発展は豊かさをもたらす一方、原子力事故や環境汚染など、管理困難なリスクをも生み出した。これらのリスクは国境を越え、将来世代にまで影響を及ぼす点で、従来の危険とは本質的に異なる。',
+  q:'この文章で述べられているリスク社会の特徴として最も適切なものを選びなさい。',
+  opts:['リスクは科学技術によって完全に管理できる','リスクは国境や世代を越える管理困難な性格を持つ','現代のリスクは過去の危険と本質的に同じだ','科学技術の発展はリスクを減らすだけだ'],correct:1,
+  exp:'「国境を越え、将来世代にまで影響を及ぼす点で、従来の危険とは本質的に異なる」がBの内容。A・Dは逆。Cも本文と逆（本質的に異なると述べている）。'},
+ {id:'s4j2',subject:'現代文',type:'語彙',diff:'標準',
+  passage:null,
+  q:'「止揚（アウフヘーベン）」の意味として最も適切なものを選びなさい。',
+  opts:['二つの対立を無視すること','対立する二つを否定しつつより高い段階で統合すること','一方の考えを完全に否定すること','二つの考えを折半すること'],correct:1,
+  exp:'止揚（しよう）／アウフヘーベン＝ヘーゲル弁証法の概念。テーゼ（正）とアンチテーゼ（反）を否定しつつより高次のジンテーゼ（合）へと統合すること。'},
+ {id:'s4j3',subject:'現代文',type:'指示語',diff:'やや難',
+  passage:'芸術は常に時代の産物である。しかし<u>それ</u>は同時に、時代を超えて人々の心に訴え続ける普遍的な何かを持っている。<u>この矛盾</u>こそが、芸術の本質的な魅力の一つだと言えよう。',
+  q:'傍線部「この矛盾」が指す内容として最も適切なものを選びなさい。',
+  opts:['芸術が時代によって評価が変わること','芸術が時代の産物でありながら時代を超えた普遍性も持つこと','芸術が人々に感動を与えること','芸術の価値が金銭で測れないこと'],correct:1,
+  exp:'「この矛盾」は「時代の産物である（時代性）」と「時代を超える（普遍性）」という二つの性格が矛盾することを指す。Bがこれを正確に表している。'},
+ {id:'s4j4',subject:'現代文',type:'語彙',diff:'基礎',
+  passage:null,
+  q:'「蓋然性」の意味として最も適切なものを選びなさい。',
+  opts:['確実に起こること','ある程度起こりそうな可能性・確からしさ','全く起こらないこと','過去に起こったこと'],correct:1,
+  exp:'蓋然性（がいぜんせい）＝「ある事柄が起こる可能性・確からしさ」のこと。probability（確率）に近い概念。「蓋然性が高い」＝起こりそうだ。'},
+],
+// ── セット5 ──
+[
+ {id:'s5e1',subject:'英語',type:'長文読解',diff:'標準',
+  passage:'Mindfulness meditation has gained scientific credibility in recent years. Research shows that regular practice can <em>( 1 )</em> stress, improve focus, and even alter brain structure in beneficial ways.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['increase','alleviate','cause','ignore'],correct:1,
+  exp:'alleviate（和らげる・軽減する）が正解。「ストレスを軽減する」という文脈に合う。increase＝増やす（逆）、cause＝引き起こす（逆）、ignore＝無視する。'},
+ {id:'s5e2',subject:'英語',type:'パラフレーズ',diff:'標準',
+  passage:'The company\'s new product line was an <em>unequivocal</em> success, far exceeding sales expectations.',
+  q:'下線部 "unequivocal" の意味として最も近いものを選びなさい。',
+  opts:['partial','clear and definite','unexpected','temporary'],correct:1,
+  exp:'unequivocal＝「明白な・疑いのない」。un-（否定）+ equivocal（曖昧な）。B: clear and definite が最も近い。期待をはるかに超えたという文脈からも判断できる。'},
+ {id:'s5e3',subject:'英語',type:'内容一致',diff:'標準',
+  passage:'The sharing economy, exemplified by companies like Airbnb and Uber, has disrupted traditional industries. While it offers consumers more choice and lower prices, it has also raised concerns about worker rights, safety standards, and tax compliance.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['シェアリングエコノミーは従来産業を強化した','シェアリングエコノミーは消費者の選択肢と低価格をもたらす一方で懸念もある','AirbnbとUberは労働者の権利保護で評価されている','シェアリングエコノミーに関する懸念は存在しない'],correct:1,
+  exp:'"offers consumers more choice and lower prices" かつ "raised concerns about worker rights" とあり、Bが正解。A:逆（disrupted＝混乱させた）。C:逆（worker rightsへの懸念が示されている）。D:逆。'},
+ {id:'s5e4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'The historical record shows that <em>authoritarian</em> regimes often suppress free speech.',
+  q:'下線部 "authoritarian" の意味として最も近いものを選びなさい。',
+  opts:['democratic','dictatorial','ancient','economic'],correct:1,
+  exp:'authoritarian＝「権威主義的な・独裁的な」。B: dictatorial が最も近い。言論の自由を抑圧するという文脈からも推測できる。democratic＝民主的（反意語）。'},
+ {id:'s5e5',subject:'英語',type:'正誤問題',diff:'標準',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['Despite of the cold weather, they went for a walk.','She not only sings but also plays the guitar.','He is one of the best player in the team.','I am agree with your opinion.'],correct:1,
+  exp:'B: not only A but also B の正しい並列構造。A:despite は前置詞なのでofは不要→Despite the cold weather。C:one of the+複数名詞→playersが正しい。D:agreeは動詞→I agree withが正しい。'},
+ {id:'s5e6',subject:'英語',type:'正誤問題',diff:'やや難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['The more you practice, more you improve.','It was so a difficult question that nobody answered.','She had her car repair by a mechanic.','The sooner you start, the better your chances are.'],correct:3,
+  exp:'D: the+比較級〜, the+比較級〜の正しい構文。A:The more〜, the more〜→the moreが必要。B:so+形容詞+a+名詞→so difficult a questionが正しい。C:have+O+過去分詞→repairedが正しい。'},
+ {id:'s5e7',subject:'英語',type:'空所補充',diff:'標準',
+  passage:'The old building was finally torn <em>( 2 )</em> to make way for the new shopping mall.',
+  q:'空所 ( 2 ) に入る最も適切な語を選びなさい。',
+  opts:['up','down','out','off'],correct:1,
+  exp:'tear down＝「取り壊す・解体する」。tear up＝引き裂く、tear out＝引き抜く、tear off＝引きちぎる。'},
+ {id:'s5e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The diplomat\'s <em>equivocal</em> response left journalists uncertain about the government\'s true position.',
+  q:'下線部 "equivocal" の意味として最も近いものを選びなさい。',
+  opts:['straightforward','ambiguous','honest','decisive'],correct:1,
+  exp:'equivocal＝「曖昧な・どちらとも取れる」。B: ambiguous が最も近い。ジャーナリストが政府の立場を把握できなかったという文脈からも判断できる。'},
+ {id:'s5j1',subject:'現代文',type:'内容理解',diff:'標準',
+  passage:'「他者」の存在は、自己認識において不可欠な役割を果たす。人は他者の目を通じて初めて自分を客観視し、社会的な自己を形成する。サルトルが「他者は地獄だ」と言ったのは、他者の視線が自己を束縛し、不自由にする側面を強調したからに他ならない。',
+  q:'この文章の内容として最も適切なものを選びなさい。',
+  opts:['他者の存在は自己認識に全く影響しない','他者の視線は自己認識にとって両義的な役割を持つ','サルトルは他者の重要性を否定した','自己認識は完全に内面的なプロセスだ'],correct:1,
+  exp:'「不可欠な役割を果たす」（肯定面）と「自己を束縛し不自由にする」（否定面）の両面が述べられており、Bの「両義的」が正確。A・Dは逆。Cも逆（重要性を強調している）。'},
+ {id:'s5j2',subject:'現代文',type:'語彙',diff:'標準',
+  passage:null,
+  q:'「弁証法」の内容として最も適切なものを選びなさい。',
+  opts:['論理的に正しい議論のみを認める方法','矛盾・対立を通じて発展・統合する思考方法','感情に訴える説得技法','権威ある人物の意見を優先する考え方'],correct:1,
+  exp:'弁証法（dialectics）＝テーゼ（正）→アンチテーゼ（反）→ジンテーゼ（合）という矛盾・対立を通じた発展の論理。ヘーゲル・マルクスで有名。'},
+ {id:'s5j3',subject:'現代文',type:'接続語',diff:'やや難',
+  passage:'グローバル化により国家間の経済的相互依存が深まった。（　　）、それぞれの国が独自の文化や価値観を保持しようとする動きも同時に強まっている。',
+  q:'空欄に最も適切な接続語を選びなさい。',
+  opts:['それゆえに','また','その反面','つまり'],correct:2,
+  exp:'前文（相互依存）と後文（独自性の保持）は逆説的・対比の関係。「その反面」が最適。「それゆえに」「また」は同じ方向に流れる。「つまり」は言い換え。'},
+ {id:'s5j4',subject:'現代文',type:'語彙',diff:'やや難',
+  passage:null,
+  q:'「相対主義」の意味として最も適切なものを選びなさい。',
+  opts:['すべての価値観・真理は絶対的に正しい','価値観や真理は文化・状況によって異なり絶対的基準はない','多数派の意見が常に正しい','科学的事実のみが真実だ'],correct:1,
+  exp:'相対主義（relativism）＝価値観・道徳・真理は絶対的なものではなく、文化・時代・状況によって相対的に変わるという立場。絶対主義（absolutism）の対義語。'},
+],
+// ── セット6 ──
+[
+ {id:'s6e1',subject:'英語',type:'長文読解',diff:'やや難',
+  passage:'The concept of "digital detox" — intentionally disconnecting from electronic devices — is gaining traction. Proponents argue that constant connectivity <em>( 1 )</em> anxiety and reduces the ability to focus on deep, meaningful tasks.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['relieves','exacerbates','prevents','measures'],correct:1,
+  exp:'exacerbates（悪化させる）が正解。デジタルデトックスが支持されている文脈から、「常時接続が不安を悪化させる」という論旨。relieves＝和らげる（逆）。'},
+ {id:'s6e2',subject:'英語',type:'パラフレーズ',diff:'標準',
+  passage:'Despite facing numerous obstacles, she remained <em>tenacious</em> in her pursuit of her goals.',
+  q:'下線部 "tenacious" の意味として最も近いものを選びなさい。',
+  opts:['pessimistic','determined','cautious','flexible'],correct:1,
+  exp:'tenacious＝「粘り強い・断固とした」。B: determined が最も近い。多くの障害に直面してもくじけないという文脈からも判断できる。'},
+ {id:'s6e3',subject:'英語',type:'内容一致',diff:'やや難',
+  passage:'While renewable energy sources like solar and wind power are becoming increasingly affordable, the challenge of energy storage remains significant. Without efficient battery technology, surplus energy generated during peak production times cannot be reliably stored for use during periods of high demand.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['再生可能エネルギーのコストは依然として高い','効率的な蓄電技術がないと余剰エネルギーを安定的に貯蔵できない','太陽光・風力発電はエネルギー貯蔵の問題を解決した','再生可能エネルギーの普及に価格は関係ない'],correct:1,
+  exp:'"Without efficient battery technology, surplus energy...cannot be reliably stored" とあり、Bが正解。A:逆（increasingly affordable＝手頃になっている）。C:逆（課題が残ると述べている）。'},
+ {id:'s6e4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'The journalist\'s <em>incisive</em> questions exposed the contradictions in the politician\'s argument.',
+  q:'下線部 "incisive" の意味として最も近いものを選びなさい。',
+  opts:['polite','penetrating','lengthy','prepared'],correct:1,
+  exp:'incisive＝「鋭い・切れ味の鋭い」。B: penetrating が最も近い。政治家の矛盾を露わにしたという文脈からも推測できる。'},
+ {id:'s6e5',subject:'英語',type:'正誤問題',diff:'標準',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['She was made to wait for three hours.','He was made wait outside the building.','They were made leaving immediately.','I was made to feeling uncomfortable.'],correct:0,
+  exp:'A: make+O+原形の受動態→be made to+原形の正しい形。B:to waitが必要。C:to leaveが必要。D:to feelが必要（feelingは不可）。'},
+ {id:'s6e6',subject:'英語',type:'正誤問題',diff:'やや難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['He is said to be the richest man in the country.','She is known as writing detective novels.','They are believed to living in Paris.','He was reported leaving the country.'],correct:0,
+  exp:'A: be said to+原形（〜と言われている）の正しい形。B:be known for+-ingが正しい。C:be believed to+原形→liveが正しい。D:be reported to have left（報告された過去）またはbe reported as having leftが正しい。'},
+ {id:'s6e7',subject:'英語',type:'空所補充',diff:'標準',
+  passage:'We need to take the environmental impact into <em>( 2 )</em> before making this decision.',
+  q:'空所 ( 2 ) に入る最も適切な語を選びなさい。',
+  opts:['mind','account','practice','question'],correct:1,
+  exp:'take into account＝「〜を考慮に入れる」という重要熟語。take into mind・practiceは慣用句として一般的でない。take into question＝疑問視する（異なる意味）。'},
+ {id:'s6e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The scientist\'s hypothesis was <em>corroborated</em> by subsequent experiments conducted in three different laboratories.',
+  q:'下線部 "corroborated" の意味として最も近いものを選びなさい。',
+  opts:['rejected','confirmed','challenged','ignored'],correct:1,
+  exp:'corroborate＝「（証拠・実験が）〜を裏付ける・確証する」。B: confirmed が最も近い。3つの異なる研究室での実験が続いて行われたという文脈から肯定的な結果と推測できる。'},
+ {id:'s6j1',subject:'現代文',type:'内容理解',diff:'やや難',
+  passage:'文化とは、ある集団が共有する価値観・信念・行動様式の総体である。しかし文化は固定したものではなく、異文化との接触や内部からの変革によって絶えず変化し続ける。この動態性こそが、文化を生きたものとして保つ原動力となる。',
+  q:'この文章における「文化」の特性として最も適切なものを選びなさい。',
+  opts:['文化は変化せず世代を超えて固定される','文化は動態的であり絶えず変化し続ける','文化の変化は外部からのみ起こる','文化は個人によって異なる信念体系だ'],correct:1,
+  exp:'「異文化との接触や内部からの変革によって絶えず変化し続ける」「動態性こそが原動力」とあり、Bが正解。A:逆（固定したものではない）。C:内部からの変革も含む。Dは集団の共有という定義と矛盾。'},
+ {id:'s6j2',subject:'現代文',type:'語彙',diff:'標準',
+  passage:null,
+  q:'「メタ認知」の意味として最も適切なものを選びなさい。',
+  opts:['他者の思考を理解する能力','自分の思考や認知プロセス自体を客観的に把握する能力','記憶力を高める学習法','感情をコントロールする技術'],correct:1,
+  exp:'メタ認知（metacognition）＝「認知についての認知」。自分がどのように考え、理解しているかを客観的に把握・監視する能力。学習の効率化に重要。'},
+ {id:'s6j3',subject:'現代文',type:'接続語',diff:'標準',
+  passage:'物質的な豊かさが増した現代社会において、人々の幸福感は必ずしも向上していない。（　　）、精神的な充足感や人間関係の質が幸福の鍵であることが、多くの研究で示されている。',
+  q:'空欄に最も適切な接続語を選びなさい。',
+  opts:['それゆえ','むしろ','したがって','例えば'],correct:1,
+  exp:'前文（物質的豊かさと幸福感の乖離）を受けて、後文（精神的充足が鍵）が対比・修正的に続く関係。「むしろ」が最適。「それゆえ・したがって」は順接、「例えば」は例示。'},
+ {id:'s6j4',subject:'現代文',type:'語彙',diff:'やや難',
+  passage:null,
+  q:'「ハビトゥス」（bourdieu）の意味として最も適切なものを選びなさい。',
+  opts:['個人が意識的に選択する行動様式','社会的環境によって形成された無意識的な行動・思考の傾向','国家が定める法律や規則の体系','生物学的に決定される本能的行動'],correct:1,
+  exp:'ハビトゥス（habitus）＝ブルデューが提唱した概念。個人が社会化の過程で無意識的に身につけた行動・思考・知覚の傾向・構造。階級と文化再生産の説明に使われる。'},
+],
+// ── セット7 ──
+[
+ {id:'s7e1',subject:'英語',type:'長文読解',diff:'標準',
+  passage:'Public libraries are evolving to meet the needs of the digital age. Beyond lending books, many now offer internet access, coding classes, and community spaces, serving as vital <em>( 1 )</em> for lifelong learning.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['barriers','hubs','costs','replacements'],correct:1,
+  exp:'hubs（中心地・拠点）が正解。「生涯学習の拠点として機能する」という文脈に合う。barriers＝障壁、costs＝費用、replacements＝代替物。'},
+ {id:'s7e2',subject:'英語',type:'パラフレーズ',diff:'標準',
+  passage:'The CEO made an <em>unprecedented</em> decision to give all employees a week of paid leave after the crisis.',
+  q:'下線部 "unprecedented" の意味として最も近いものを選びなさい。',
+  opts:['expected','never done before','controversial','unpopular'],correct:1,
+  exp:'unprecedented＝「前例のない」。B: never done before が最も近い。un-（否定）+ precedent（前例）で構成される語。'},
+ {id:'s7e3',subject:'英語',type:'内容一致',diff:'標準',
+  passage:'Cultural diplomacy uses art, education, and cultural exchange to build international understanding. Unlike traditional diplomacy, which focuses on political and economic negotiations, cultural diplomacy seeks to create lasting bonds between peoples rather than governments.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['文化外交は政治・経済交渉を中心とする','文化外交は政府間よりも人々の間の絆を作ることを目指す','文化外交と伝統的外交は同じ手法を使う','文化外交は近年効果がないとされている'],correct:1,
+  exp:'"seeks to create lasting bonds between peoples rather than governments" とあり、Bが正解。A:逆（政治・経済は伝統的外交の特徴）。C:逆（Unlike traditional diplomacyと対比されている）。'},
+ {id:'s7e4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'The artist\'s latest work is a <em>poignant</em> reflection on loss and memory.',
+  q:'下線部 "poignant" の意味として最も近いものを選びなさい。',
+  opts:['humorous','deeply moving','abstract','optimistic'],correct:1,
+  exp:'poignant＝「心を打つ・胸に刺さるような」。B: deeply moving が最も近い。喪失と記憶についての作品という文脈からも感情的な深さが推測できる。'},
+ {id:'s7e5',subject:'英語',type:'正誤問題',diff:'標準',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['It is no use to cry over spilt milk.','It is worth to visit Kyoto in autumn.','It is no good wasting time on social media.','It is worth while read this book carefully.'],correct:2,
+  exp:'C: it is no good+-ing（〜しても無駄だ）の正しい形。A:It is no use+-ing→cryingが正しい。B:It is worth+-ing→visitingが正しい。D:It is worthwhile+-ing→readingが正しい。'},
+ {id:'s7e6',subject:'英語',type:'正誤問題',diff:'やや難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['What surprised me was his reaction calm.','What he said was hard to believe.','What I want it is a long vacation.','What happened in the meeting was disappointed.'],correct:1,
+  exp:'B: What he said（関係代名詞節）+ was + 補語の正しい構造。A:his calm reactionが正しい（語順）。C:What I want isなのでitは不要。D:主語はこと（物）なのでdisappointing（能動）が正しい。'},
+ {id:'s7e7',subject:'英語',type:'空所補充',diff:'標準',
+  passage:'After months of negotiation, the two countries finally reached a <em>( 2 )</em> on the trade agreement.',
+  q:'空所 ( 2 ) に入る最も適切な語を選びなさい。',
+  opts:['conflict','consensus','confusion','criticism'],correct:1,
+  exp:'reach a consensus＝「合意に達する・意見が一致する」という重要表現。negotiationの後の文脈から肯定的な結果（合意）が入ると判断できる。'},
+ {id:'s7e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The minister\'s <em>vacillating</em> stance on the issue frustrated both supporters and critics.',
+  q:'下線部 "vacillating" の意味として最も近いものを選びなさい。',
+  opts:['decisive','wavering','aggressive','consistent'],correct:1,
+  exp:'vacillate＝「ぐらつく・優柔不断に揺れ動く」。B: wavering が最も近い。支持者も批評家も苛立てたという文脈から一貫性のなさが推測できる。decisive＝決断力ある（反意語）。'},
+ {id:'s7j1',subject:'現代文',type:'内容理解',diff:'標準',
+  passage:'現代の若者が直面する「承認欲求」の問題は、SNSの普及と深く関わっている。他者からの「いいね」や評価を求めることで、自己肯定感を外部に依存させてしまう。真の自己肯定感とは、他者の評価に左右されない内発的なものであるべきだ。',
+  q:'この文章で筆者が主張していることとして最も適切なものを選びなさい。',
+  opts:['SNSを積極的に活用して承認を得るべきだ','自己肯定感は他者の評価ではなく内発的なものであるべきだ','承認欲求は現代に限った問題ではない','SNSは若者の精神的成長に役立っている'],correct:1,
+  exp:'末尾の「真の自己肯定感とは、他者の評価に左右されない内発的なものであるべきだ」が主張。A・Dは逆。Cは本文に根拠なし。'},
+ {id:'s7j2',subject:'現代文',type:'語彙',diff:'基礎',
+  passage:null,
+  q:'「形而上学」の意味として最も適切なものを選びなさい。',
+  opts:['物質・自然現象を扱う学問','存在・本質・神など感覚を超えた対象を扱う哲学の一分野','社会構造を分析する学問','人間の心理を研究する学問'],correct:1,
+  exp:'形而上学（けいじじょうがく）＝metaphysics。「形而上」は感覚で捉えられない抽象的なものを指す。存在とは何か・真理とは何かなどを問う哲学の根本分野。'},
+ {id:'s7j3',subject:'現代文',type:'指示語',diff:'標準',
+  passage:'経済成長は長らく社会の目標とされてきた。しかし<u>その追求</u>が環境破壊や格差拡大をもたらしたことも否定できない。だからこそ、成長に代わる新たな豊かさの指標が模索されている。',
+  q:'傍線部「その追求」が指す内容として最も適切なものを選びなさい。',
+  opts:['環境保護の追求','格差解消の追求','経済成長の追求','新たな豊かさの指標の追求'],correct:2,
+  exp:'「その追求」は直前の「経済成長」を指示語「その」で受けている。「経済成長の追求」がCの内容に対応する。'},
+ {id:'s7j4',subject:'現代文',type:'語彙',diff:'標準',
+  passage:null,
+  q:'「ノスタルジー」の意味として最も適切なものを選びなさい。',
+  opts:['未来への期待や希望','過去の懐かしい時代への郷愁・望郷の念','現在の生活への満足感','外国の文化への憧れ'],correct:1,
+  exp:'ノスタルジー（nostalgia）＝過去の懐かしい時代や故郷への郷愁・思慕の情。ギリシャ語のnostos（帰郷）＋algos（痛み）が語源。'},
+],
+// ── セット8 ──
+[
+ {id:'s8e1',subject:'英語',type:'長文読解',diff:'やや難',
+  passage:'The concept of "nudge theory," developed by behavioral economists, suggests that small changes in how choices are <em>( 1 )</em> can significantly influence people\'s decisions without restricting their freedom.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['eliminated','presented','avoided','criticized'],correct:1,
+  exp:'presented（提示される）が正解。「選択肢の提示の仕方を変えることが行動に影響する」というナッジ理論の内容に合う。'},
+ {id:'s8e2',subject:'英語',type:'パラフレーズ',diff:'標準',
+  passage:'The new law was designed to <em>deter</em> companies from dumping toxic waste illegally.',
+  q:'下線部 "deter" の意味として最も近いものを選びなさい。',
+  opts:['encourage','discourage','allow','require'],correct:1,
+  exp:'deter＝「（罰則・脅威などで）〜を思いとどまらせる・抑止する」。B: discourage が最も近い。illegal dumpingを防ぐ法律という文脈から否定的な方向と判断できる。'},
+ {id:'s8e3',subject:'英語',type:'内容一致',diff:'やや難',
+  passage:'The concept of "emotional intelligence" (EQ) has gained recognition alongside traditional IQ as a predictor of success. EQ includes the ability to recognize and manage one\'s own emotions and understand those of others. Critics, however, argue that EQ is difficult to measure objectively and that its relationship to success is overstated.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['EQはIQよりも重要な成功の指標とされている','EQの客観的測定が難しいという批判がある','EQに関する批判は存在しない','EQは感情ではなく知識に関する概念だ'],correct:1,
+  exp:'"Critics...argue that EQ is difficult to measure objectively" とあり、Bが正解。A:alongside（並んで）とあり、優劣は述べられていない。C:逆（批判が述べられている）。D:逆（感情に関する概念）。'},
+ {id:'s8e4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'The report presents a <em>scathing</em> critique of the government\'s handling of the pandemic.',
+  q:'下線部 "scathing" の意味として最も近いものを選びなさい。',
+  opts:['mild','harshly critical','balanced','cautious'],correct:1,
+  exp:'scathing＝「痛烈な・手厳しい」。B: harshly critical が最も近い。critiqueを修飾する強調語として機能している。mild＝穏やか（反意語）。'},
+ {id:'s8e5',subject:'英語',type:'正誤問題',diff:'標準',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['Judging from the weather, it looks like rain.','Considering from his age, he is very active.','Depending of the situation, we may cancel.','Allowing for the delay, we must leave early.'],correct:0,
+  exp:'A: Judging from〜（〜から判断すると）の正しい独立分詞構文。B:Considering his age（fromは不要）が正しい。C:Depending on the situation（onが正しい）。D:Allowing for the delay（正しい）→Aと同様に正解になり得るが、「we must leave early」の文脈でAが最も自然。'},
+ {id:'s8e6',subject:'英語',type:'正誤問題',diff:'難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['The problem is too complex for us to solving it.','She is old enough to make her own decisions.','He runs so fast that I can hardly catch with him.','It is such a wonderful weather that we went out.'],correct:1,
+  exp:'B: 〜enough to+原形（〜するのに十分なほど〜だ）の正しい形。A:to solve（原形）が正しく、itも不要。C:catch up with（追いつく）→upが必要。D:such+a+形容詞+名詞→such wonderful weatherが正しい（天気は不可算）。'},
+ {id:'s8e7',subject:'英語',type:'空所補充',diff:'やや難',
+  passage:'The unexpected success of the film caught everyone off <em>( 2 )</em>, including the director herself.',
+  q:'空所 ( 2 ) に入る最も適切な語を選びなさい。',
+  opts:['guard','balance','track','side'],correct:0,
+  exp:'catch off guard＝「不意をつく・油断させる」という慣用句。catch off balance＝バランスを崩させる（やや類似するが慣用句としてはguardが一般的）。'},
+ {id:'s8e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The historian\'s account of the war was remarkably <em>dispassionate</em>, presenting both sides without apparent bias.',
+  q:'下線部 "dispassionate" の意味として最も近いものを選びなさい。',
+  opts:['emotional','objective','patriotic','critical'],correct:1,
+  exp:'dispassionate＝「感情に左右されない・冷静な・公平な」。B: objective が最も近い。dis-（否定）+ passionate（情熱的）で構成。両側面を偏りなく提示したという文脈からも判断できる。'},
+ {id:'s8j1',subject:'現代文',type:'内容理解',diff:'やや難',
+  passage:'「公共性」とは、特定の個人や集団の利益を超えた、社会全体に関わる領域のことである。民主主義社会において、公共空間は様々な意見や価値観が競合する場でもある。重要なのは、その競合が暴力によってではなく、言論と対話によって解決される点にある。',
+  q:'この文章が述べていることとして最も適切なものを選びなさい。',
+  opts:['公共性とは多数派の意見が支配する領域だ','民主主義において公共空間の意見対立は言論・対話で解決されるべきだ','公共性の概念は個人の利益を最優先にする','暴力的な手段も公共問題の解決に必要だ'],correct:1,
+  exp:'「競合が暴力によってではなく、言論と対話によって解決される」がBの内容。A:多数派支配ではなく多様な意見の競合。C:逆（特定個人の利益を超える）。Dは逆。'},
+ {id:'s8j2',subject:'現代文',type:'語彙',diff:'標準',
+  passage:null,
+  q:'「オリエンタリズム」（サイード）の意味として最も適切なものを選びなさい。',
+  opts:['東洋文化への純粋な学術的関心','西洋が東洋を支配・管理するために作り上げた偏ったイメージや知の体系','東洋の思想が西洋に与えた影響','アジアの哲学・宗教の総称'],correct:1,
+  exp:'オリエンタリズム＝エドワード・サイードが提唱。西洋が「東洋」を劣ったもの・神秘的なものとして描くことで植民地支配を正当化した知の権力構造を批判した概念。'},
+ {id:'s8j3',subject:'現代文',type:'接続語',diff:'やや難',
+  passage:'経済的格差は教育機会の不平等を生み出す。（　　）、教育格差はさらなる経済格差を固定化するという悪循環が形成される。',
+  q:'空欄に最も適切な接続語を選びなさい。',
+  opts:['しかし','一方で','その結果として','例えば'],correct:2,
+  exp:'前文（経済格差→教育格差）の結果として後文（教育格差→経済格差の固定化）が続く因果関係。「その結果として」が最適。「しかし」は逆接、「一方で」は対比、「例えば」は例示。'},
+ {id:'s8j4',subject:'現代文',type:'語彙',diff:'やや難',
+  passage:null,
+  q:'「ポストモダン」の考え方として最も適切なものを選びなさい。',
+  opts:['近代の理性・進歩・普遍性への信頼を肯定する','近代の大きな物語（理性・進歩など）への懐疑と脱構築を主張する','科学的合理主義を究極の真理とする','伝統と宗教の復権を目指す'],correct:1,
+  exp:'ポストモダン（postmodernism）＝近代（モダン）が信じた理性・進歩・普遍的真理などの「大きな物語」を解体・脱構築しようとする思想潮流。リオタール・デリダなどが代表的思想家。'},
+],
+// ── セット9 ──
+[
+ {id:'s9e1',subject:'英語',type:'長文読解',diff:'やや難',
+  passage:'Food security is becoming a pressing global concern. As the world population grows, agricultural systems must produce more food on less land, using fewer resources, while also <em>( 1 )</em> to the challenges of climate change.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['contributing','adapting','surrendering','returning'],correct:1,
+  exp:'adapting（適応する）が正解。「気候変動の課題に適応しながら」という文脈に合う。adapting to challenges＝課題に対応する。'},
+ {id:'s9e2',subject:'英語',type:'パラフレーズ',diff:'標準',
+  passage:'The young entrepreneur showed <em>astute</em> business judgment, identifying profitable opportunities others had overlooked.',
+  q:'下線部 "astute" の意味として最も近いものを選びなさい。',
+  opts:['reckless','shrewd','lucky','hesitant'],correct:1,
+  exp:'astute＝「抜け目のない・機敏な・洞察力のある」。B: shrewd が最も近い。他者が見逃した機会を見つけたという文脈からも判断できる。'},
+ {id:'s9e3',subject:'英語',type:'内容一致',diff:'やや難',
+  passage:'Ecotourism aims to minimize the environmental impact of travel while supporting conservation efforts and local communities. However, critics argue that poorly managed ecotourism can cause the very damage it claims to prevent, through habitat disturbance and increased carbon emissions from flights.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['エコツーリズムは環境への影響を完全に排除できる','管理が不十分なエコツーリズムは環境ダメージを引き起こす可能性がある','批評家はエコツーリズムを全面的に支持している','エコツーリズムは地域コミュニティを支援しない'],correct:1,
+  exp:'"poorly managed ecotourism can cause the very damage it claims to prevent" とあり、Bが正解。A:逆（完全排除はできないと示唆）。C:逆（批評家は問題点を指摘）。D:逆（local communitiesを支援すると述べている）。'},
+ {id:'s9e4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'The professor\'s feedback was <em>constructive</em>, helping students understand how to improve their work.',
+  q:'下線部 "constructive" の意味として最も近いものを選びなさい。',
+  opts:['harsh','helpful and positive','vague','discouraging'],correct:1,
+  exp:'constructive＝「建設的な・改善につながる」。B: helpful and positive が最も近い。学生が改善方法を理解するのを助けたという文脈からも判断できる。'},
+ {id:'s9e5',subject:'英語',type:'正誤問題',diff:'標準',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['He prevented me to go to the party.','She stopped him from leaving the building.','They prohibited him to enter the area.','I kept her to wait outside.'],correct:1,
+  exp:'B: stop+O+from+-ing（Oが〜するのを止める）の正しい形。A:prevent O from -ingが正しい（toは不可）。C:prohibit O from -ingが正しい。D:keep O -ing（待たせ続ける）またはkeep O from -ingが正しい。'},
+ {id:'s9e6',subject:'英語',type:'正誤問題',diff:'やや難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['Little did I know that he was a famous actor.','Seldom he visits his parents.','Rarely she makes mistakes.','Never I have seen such a beautiful sunset.'],correct:0,
+  exp:'A: Little did I know〜（否定語Little→倒置）の正しい倒置構文。B:Seldom does he visitが正しい（倒置）。C:Rarely does she makeが正しい（倒置）。D:Never have I seenが正しい（倒置）。'},
+ {id:'s9e7',subject:'英語',type:'空所補充',diff:'標準',
+  passage:'The company decided to cut <em>( 2 )</em> on expenses to survive the economic downturn.',
+  q:'空所 ( 2 ) に入る最も適切な語を選びなさい。',
+  opts:['back','out','up','off'],correct:0,
+  exp:'cut back on〜＝「〜を削減する・切り詰める」という重要熟語。cut out＝取り除く、cut up＝切り刻む、cut off＝遮断する。'},
+ {id:'s9e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The committee\'s decision was <em>contentious</em>, sparking heated debate among members.',
+  q:'下線部 "contentious" の意味として最も近いものを選びなさい。',
+  opts:['unanimous','causing disagreement','straightforward','welcomed'],correct:1,
+  exp:'contentious＝「論争を引き起こす・物議をかもす」。B: causing disagreement が最も近い。激しい議論を引き起こしたという文脈からも判断できる。unanimous＝全会一致（反意語）。'},
+ {id:'s9j1',subject:'現代文',type:'内容理解',diff:'標準',
+  passage:'翻訳とは単なる言語の変換ではない。それは異なる文化・思想・世界観の間を橋渡しする創造的な行為である。完璧な翻訳は不可能であるとも言われるが、まさにその不可能性への挑戦の中に、翻訳の醍醐味がある。',
+  q:'この文章における「翻訳」の特性として最も適切なものを選びなさい。',
+  opts:['翻訳は機械的な言語変換作業だ','翻訳は文化間の橋渡しをする創造的行為で、その不完全性自体に価値がある','完璧な翻訳を実現することが翻訳者の使命だ','翻訳は文化の違いを消し去るものだ'],correct:1,
+  exp:'「創造的な行為」「不可能性への挑戦の中に醍醐味がある」とあり、Bが正解。A:逆（単なる変換ではないと否定）。C:完璧は不可能とあり逆。D:橋渡しであり消去ではない。'},
+ {id:'s9j2',subject:'現代文',type:'語彙',diff:'標準',
+  passage:null,
+  q:'「イデオロギー」の意味として最も適切なものを選びなさい。',
+  opts:['個人の趣味や好み','ある集団・階級が共有する政治的・社会的な価値観・信念体系','科学的に証明された事実の集合','宗教的な教義のみを指す語'],correct:1,
+  exp:'イデオロギー（ideology）＝ある社会集団・階級が持つ政治的・社会的・経済的な価値観・信念・世界観の体系。マルクスは支配階級の利益を正当化するものとして批判的に用いた。'},
+ {id:'s9j3',subject:'現代文',type:'指示語',diff:'標準',
+  passage:'近代科学は自然を数値化・定量化することで飛躍的に発展した。しかし<u>そのような方法論</u>は、数値では表せない人間の感情や価値観を周辺化してしまうという批判もある。',
+  q:'傍線部「そのような方法論」が指す内容として最も適切なものを選びなさい。',
+  opts:['人間の感情を重視する研究方法','自然を数値化・定量化する科学的方法論','人文科学的なアプローチ全般','価値観に基づいた研究方法'],correct:1,
+  exp:'「そのような方法論」は直前の「自然を数値化・定量化すること」を指す。Bがこれに対応する。AとCは逆（批判される側の内容）。'},
+ {id:'s9j4',subject:'現代文',type:'語彙',diff:'やや難',
+  passage:null,
+  q:'「エートス」の意味として最も適切なものを選びなさい。',
+  opts:['個人の瞬間的な感情','ある集団・社会・時代に特有の気風・精神的特性・倫理的性格','論理的な議論の構造','美的な感受性や趣味'],correct:1,
+  exp:'エートス（ethos）＝ある集団・民族・時代に共通する精神的風土・倫理的性格・気質。アリストテレスの修辞学では話者の信頼性・人格を指す。倫理学（ethics）の語源。'},
+],
+// ── セット10 ──
+[
+ {id:'s10e1',subject:'英語',type:'長文読解',diff:'難',
+  passage:'The rise of "deepfake" technology poses significant challenges to trust and democracy. As AI-generated videos become increasingly <em>( 1 )</em> from authentic footage, the very notion of visual evidence may be undermined.',
+  q:'空所 ( 1 ) に入る最も適切な語を選びなさい。',
+  opts:['different','indistinguishable','separate','removed'],correct:1,
+  exp:'indistinguishable（区別がつかない）が正解。「本物の映像と区別がつかなくなる」という文脈。indistinguishable from〜＝〜と見分けがつかない。'},
+ {id:'s10e2',subject:'英語',type:'パラフレーズ',diff:'やや難',
+  passage:'The company\'s <em>meteoric</em> rise from a small startup to a global corporation took less than a decade.',
+  q:'下線部 "meteoric" の意味として最も近いものを選びなさい。',
+  opts:['gradual','extremely rapid','planned','modest'],correct:1,
+  exp:'meteoric＝「流星のような・急速な・目覚ましい」。B: extremely rapid が最も近い。10年以内という短期間での成長という文脈からも判断できる。gradual＝徐々の（反意語）。'},
+ {id:'s10e3',subject:'英語',type:'内容一致',diff:'難',
+  passage:'The concept of "degrowth" challenges the assumption that economic growth is synonymous with well-being. Proponents argue that perpetual growth on a finite planet is ecologically impossible and that societies should instead focus on reducing consumption and prioritizing human flourishing over GDP expansion.',
+  q:'本文の内容と一致するものを選びなさい。',
+  opts:['デグロースは経済成長を最優先にする概念だ','デグロースは有限な地球で永続的成長は不可能だとし消費削減を主張する','デグロースの支持者はGDP拡大を幸福の指標とする','デグロースは現在の主流経済学と同じ前提に立つ'],correct:1,
+  exp:'"perpetual growth on a finite planet is ecologically impossible" + "reducing consumption and prioritizing human flourishing over GDP" とあり、Bが正解。A・C・Dはいずれも本文と逆。'},
+ {id:'s10e4',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The diplomat\'s <em>obfuscatory</em> language left negotiators uncertain about the actual terms being proposed.',
+  q:'下線部 "obfuscatory" の意味として最も近いものを選びなさい。',
+  opts:['clear','deliberately confusing','honest','technical'],correct:1,
+  exp:'obfuscatory＝「故意に難解にする・煙に巻くような」。B: deliberately confusing が最も近い。交渉担当者が実際の条件を把握できなかったという文脈からも判断できる。'},
+ {id:'s10e5',subject:'英語',type:'正誤問題',diff:'やや難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['No matter what he says, I won\'t believe him.','No matter how hard tries he, he cannot win.','Whatever difficult it is, she will try.','However much money has he, he is unhappy.'],correct:0,
+  exp:'A: No matter what（what節）+ 主語 + 動詞の正しい譲歩節。B:倒置不要→No matter how hard he triesが正しい。C:However difficult it isが正しい（副詞＋形容詞）。D:However much money he hasが正しい（倒置不要）。'},
+ {id:'s10e6',subject:'英語',type:'正誤問題',diff:'難',
+  passage:null,
+  q:'文法・語法上、正しい英文を選びなさい。',
+  opts:['Were it not for your help, I could not succeed.','Had not he arrived in time, we would have missed the train.','If it were not for water, all living things will die.','Should he to arrive late, please start without him.'],correct:0,
+  exp:'A: Were it not for〜（仮定法現在の倒置）の正しい形。B:Had he not arrivedが正しい（notの位置）。C:仮定法→would dieが正しい。D:Should he arrive（toは不要）が正しい。'},
+ {id:'s10e7',subject:'英語',type:'空所補充',diff:'やや難',
+  passage:'After the scandal, the politician\'s reputation was beyond <em>( 2 )</em>, forcing him to resign.',
+  q:'空所 ( 2 ) に入る最も適切な語を選びなさい。',
+  opts:['doubt','repair','belief','question'],correct:1,
+  exp:'beyond repair＝「修復不可能な・取り返しのつかない」という慣用表現。辞任を余儀なくされたという文脈から「評判が修復不可能になった」が自然。beyond doubt＝疑いの余地なく。'},
+ {id:'s10e8',subject:'英語',type:'パラフレーズ',diff:'難',
+  passage:'The philosopher argued that true knowledge requires <em>epistemic</em> humility — an acknowledgment of the limits of what we can know.',
+  q:'下線部 "epistemic" の意味として最も近いものを選びなさい。',
+  opts:['moral','related to knowledge','emotional','practical'],correct:1,
+  exp:'epistemic＝「認識論的な・知識に関する」。B: related to knowledge が最も近い。epistemology（認識論）から派生した語。知ることの限界を認めるという文脈からも判断できる。'},
+ {id:'s10j1',subject:'現代文',type:'内容理解',diff:'難',
+  passage:'「語ること」と「沈黙すること」は、単純な対立関係にあるのではない。ときに沈黙は、言語化できない深い感情や体験を表現する、最も雄弁な手段となる。逆に、言葉が多すぎることで、本質的なものが隠蔽されてしまうこともある。',
+  q:'この文章が主張していることとして最も適切なものを選びなさい。',
+  opts:['沈黙は常に言語より優れたコミュニケーション手段だ','沈黙と言語はそれぞれ異なる表現機能を持ち単純な優劣関係にない','言葉は多ければ多いほど本質に迫れる','感情は常に言語化されるべきだ'],correct:1,
+  exp:'「単純な対立関係にあるのではない」「沈黙が最も雄弁になることも」「言葉が多すぎて本質が隠れることも」という双方向の論述からBが正解。A・C・Dはいずれも一方的な主張。'},
+ {id:'s10j2',subject:'現代文',type:'語彙',diff:'やや難',
+  passage:null,
+  q:'「ヘゲモニー」（グラムシ）の意味として最も適切なものを選びなさい。',
+  opts:['軍事力による直接的な支配','支配階級が被支配階級の同意を獲得することで維持する文化的・思想的な指導権','国際社会における経済的な優位性','民主的な選挙による権力の正当化'],correct:1,
+  exp:'ヘゲモニー（hegemony）＝グラムシが提唱。支配は強制力だけでなく、被支配者の「同意」を文化・教育・メディアを通じて形成することで維持されるという概念。'},
+ {id:'s10j3',subject:'現代文',type:'指示語',diff:'やや難',
+  passage:'大量消費社会では、モノは使い捨てられ、人々の関係もまた流動的・一時的なものになりがちだ。<u>こうした傾向</u>は、深い人間関係を築くことを困難にし、現代人の孤立感を深める一因となっている。',
+  q:'傍線部「こうした傾向」が指す内容として最も適切なものを選びなさい。',
+  opts:['大量消費社会における経済的豊かさ','モノが使い捨てられ人間関係も流動的・一時的になる傾向','孤立感が現代人に広がっていること','深い人間関係を重視する風潮'],correct:1,
+  exp:'「こうした傾向」は直前の「モノは使い捨てられ、人々の関係もまた流動的・一時的なものになりがちだ」を指す。Bがこれを正確にまとめている。C・Dは結果や対比であり指示語の内容ではない。'},
+ {id:'s10j4',subject:'現代文',type:'語彙',diff:'難',
+  passage:null,
+  q:'「脱構築」（デリダ）の意味として最も適切なものを選びなさい。',
+  opts:['社会の古い制度を物理的に破壊すること','テキストに内在する二項対立の不安定性を暴き中心化された意味を解体すること','伝統的な価値観を完全に否定し新秩序を構築すること','文学作品の意味を作者の意図に忠実に解釈すること'],correct:1,
+  exp:'脱構築（déconstruction）＝デリダが提唱。Western哲学が前提とする二項対立（理性/感情・男/女など）において一方が中心化されていることを示し、テキスト内の矛盾・余剰を読み解くことでその階層性を解体する読解戦略。'},
+],
+];
+
+// ─────────────────────────────────────
+//  CHALLENGE STATE
+// ─────────────────────────────────────
+let chalSetIdx = 0;
+let chalScore = 0;
+let chalAnswered = new Set();
+
+function loadChalSet(idx) {
+  chalSetIdx = parseInt(idx);
+  chalScore = 0;
+  chalAnswered = new Set();
+  document.getElementById('chal-score').innerHTML = '0 <span>/ 12</span>';
+  document.getElementById('chal-bar').style.width = '0';
+  document.getElementById('chal-status').textContent = '';
+  renderChalSet();
+}
+
+function renderChalSet() {
+  const qs = CHAL_SETS[chalSetIdx];
+  const container = document.getElementById('chal-cards');
+  container.innerHTML = qs.map((q,i) => buildQCard(q, i+1, 'c')).join('');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function resetChalSet() {
+  if(!confirm('このセットをリセットしますか？')) return;
+  loadChalSet(chalSetIdx);
+  showToast('リセットしました');
+}
+
+
 const FIXED_QS = [
   {id:'fq1',subject:'英語',type:'長文読解',diff:'標準',
    passage:'Social media has dramatically changed the way people communicate. Unlike traditional media, it allows users to <em>( 1 )</em> content instantly with millions of followers.',
@@ -635,11 +1299,21 @@ async function checkOpt(pid, qid, subject, type, correct, exp) {
 
   // score (quiz only)
   const isQuiz = pid.startsWith('qfq');
+  const isChal = pid.startsWith('c');
   if (isQuiz && !quizAnswered.has(qid)) {
     quizAnswered.add(qid);
     if (isOk) quizScore++;
     document.getElementById('q-score').innerHTML = quizScore+' <span>/ '+FIXED_QS.length+'</span>';
     document.getElementById('q-bar').style.width = (quizScore/FIXED_QS.length*100)+'%';
+  }
+  if (isChal && !chalAnswered.has(qid)) {
+    chalAnswered.add(qid);
+    if (isOk) chalScore++;
+    document.getElementById('chal-score').innerHTML = chalScore+' <span>/ 12</span>';
+    document.getElementById('chal-bar').style.width = (chalScore/12*100)+'%';
+    if (chalAnswered.size === 12) {
+      document.getElementById('chal-status').textContent = `✅ セット完了！ ${chalScore}/12 正解`;
+    }
   }
 
   // save history
@@ -900,52 +1574,28 @@ async function renderLeaderboard() {
 //  デフォルト招待PW: kgdai2025
 //  管理者PW: admin_kgdai (変更不可・コード上で管理)
 // ─────────────────────────────────────
-const MASTER_PW = 'admin_kgdai'; // 管理者パスワード（あなただけが知るもの）
-const DEFAULT_INVITE_PW = 'kgdai2025'; // 初期招待パスワード
-
-function getInvitePW() {
-  return localStorage.getItem('invite_pw') || DEFAULT_INVITE_PW;
-}
+// ─────────────────────────────────────
+//  AUTH
+//  ★ パスワードを変更したい場合は
+//    INVITE_PW の値を書き換えてファイルを保存し
+//    GitHub Pages に再アップロードしてください
+// ─────────────────────────────────────
+const INVITE_PW = 'kgdai2025'; // ← ここを書き換える
 
 function authLogin() {
   const input = document.getElementById('auth-pw').value;
   const err = document.getElementById('auth-err');
-  if (input === getInvitePW()) {
+  if (input === INVITE_PW) {
     document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
     sessionStorage.setItem('auth_ok', '1');
-    // 管理者かどうか確認してadmin-cur-pwをセット
-    document.getElementById('admin-cur-pw').value = getInvitePW();
+    document.getElementById('admin-cur-pw').textContent = INVITE_PW;
   } else {
     err.textContent = 'パスワードが違います。';
     document.getElementById('auth-pw').value = '';
     document.getElementById('auth-pw').focus();
     setTimeout(() => err.textContent = '', 2500);
   }
-}
-
-function changePassword() {
-  const master = document.getElementById('admin-master-pw').value;
-  const newPw = document.getElementById('admin-new-pw').value.trim();
-  const msg = document.getElementById('admin-msg');
-  if (master !== MASTER_PW) {
-    msg.style.color = '#ff7a7a';
-    msg.textContent = '管理者パスワードが違います。';
-    setTimeout(() => msg.textContent = '', 2500);
-    return;
-  }
-  if (newPw.length < 4) {
-    msg.style.color = '#ff7a7a';
-    msg.textContent = '4文字以上で入力してください。';
-    return;
-  }
-  localStorage.setItem('invite_pw', newPw);
-  document.getElementById('admin-cur-pw').value = newPw;
-  document.getElementById('admin-new-pw').value = '';
-  document.getElementById('admin-master-pw').value = '';
-  msg.style.color = 'var(--gold)';
-  msg.textContent = '✅ パスワードを更新しました！';
-  setTimeout(() => msg.textContent = '', 3000);
 }
 
 function toggleAdmin() {
@@ -956,7 +1606,7 @@ function checkAuth() {
   if (sessionStorage.getItem('auth_ok') === '1') {
     document.getElementById('auth-overlay').style.display = 'none';
     document.getElementById('admin-panel').style.display = 'block';
-    document.getElementById('admin-cur-pw').value = getInvitePW();
+    document.getElementById('admin-cur-pw').textContent = INVITE_PW;
   } else {
     document.getElementById('auth-pw').focus();
   }
@@ -977,6 +1627,7 @@ function showToast(msg) {
 checkAuth();
 initUser();
 renderQuiz();
+loadChalSet(0);
 </script>
 </body>
 </html>
