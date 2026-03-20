@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>関西外大 受験対策問題集 Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Noto+Sans+JP:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,700;0,900;1,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy:#0b1a2e; --navy2:#0f2240; --gold:#c9a84c; --gold2:#e8c96a;
+  --cream:#f4f0e8; --cream2:#faf7f2; --red:#c0392b; --green:#1a7a4a;
+  --blue:#1a4a8a; --muted:#7a7060; --border:#ddd8cc; --white:#fff;
+  --shadow: 0 4px 24px rgba(11,26,46,0.10);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--cream);color:var(--navy);min-height:100vh}
+
+/* ── HEADER ── */
+header{
+  background:var(--navy);
+  background-image:radial-gradient(ellipse at 15% 60%,rgba(201,168,76,.18) 0%,transparent 55%),
+    radial-gradient(ellipse at 85% 30%,rgba(201,168,76,.08) 0%,transparent 50%);
+  color:#fff; padding:28px 24px 22px; position:relative; overflow:hidden;
+}
+header::after{
+  content:''; position:absolute; bottom:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--gold),var(--gold2),var(--gold));
+}
+.h-inner{max-width:960px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.h-left .badge{font-size:10px;font-weight:700;letter-spacing:3px;color:var(--gold);border:1px solid rgba(201,168,76,.4);padding:3px 10px;display:inline-block;margin-bottom:8px}
+.h-left h1{font-family:'Noto Serif JP',serif;font-size:clamp(18px,3.5vw,26px);font-weight:900;line-height:1.25}
+.h-left h1 span{color:var(--gold)}
+.h-right{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.user-input-wrap{display:flex;gap:8px;align-items:center}
+.user-input-wrap input{
+  background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);
+  color:#fff;padding:8px 14px;font-size:13px;font-family:'Noto Sans JP',sans-serif;
+  width:150px;outline:none;
+}
+.user-input-wrap input::placeholder{color:rgba(255,255,255,.35)}
+.user-input-wrap input:focus{border-color:var(--gold)}
+.btn-set-user{background:var(--gold);color:var(--navy);border:none;padding:8px 16px;font-weight:700;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;letter-spacing:.5px}
+.user-tag{font-size:12px;color:rgba(255,255,255,.6)}
+.user-tag strong{color:var(--gold2)}
+
+/* ── NAV ── */
+.nav-wrap{background:var(--navy2);border-bottom:2px solid var(--gold);position:sticky;top:0;z-index:200}
+.nav-tabs{max-width:960px;margin:0 auto;display:flex;overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{flex-shrink:0;padding:13px 22px;font-size:13px;font-weight:700;color:rgba(255,255,255,.4);background:none;border:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-2px;letter-spacing:.3px;transition:color .2s;white-space:nowrap;font-family:'Noto Sans JP',sans-serif}
+.nav-tab:hover{color:rgba(255,255,255,.75)}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+
+/* ── MAIN ── */
+main{max-width:960px;margin:0 auto;padding:28px 18px 60px}
+.sec{display:none;animation:fadeUp .3s ease}
+.sec.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.sec-title{font-family:'Noto Serif JP',serif;font-size:19px;font-weight:900;color:var(--navy);margin-bottom:22px;padding-bottom:10px;border-bottom:3px solid var(--navy);display:flex;align-items:center;gap:10px}
+.sec-icon{width:30px;height:30px;background:var(--navy);color:var(--gold);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+/* ── INFO BOX ── */
+.info-box{background:var(--navy);color:#fff;padding:16px 20px;margin-bottom:20px;border-left:4px solid var(--gold);font-size:13px;line-height:1.85}
+.info-box strong{color:var(--gold)}
+
+/* ── STATS BAR ── */
+.stats-bar{background:var(--navy);color:#fff;padding:16px 22px;margin-bottom:22px;display:flex;gap:24px;align-items:center;flex-wrap:wrap}
+.stat-item .lbl{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.5px;margin-bottom:2px}
+.stat-item .val{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;color:var(--gold);line-height:1}
+.stat-item .val span{font-size:13px;color:rgba(255,255,255,.3)}
+.prog-bar{flex:1;min-width:120px;height:5px;background:rgba(255,255,255,.1);overflow:hidden}
+.prog-fill{height:100%;background:var(--gold);transition:width .6s cubic-bezier(.4,0,.2,1);width:0}
+
+/* ── QUESTION CARD ── */
+.q-card{background:var(--white);border:1px solid var(--border);margin-bottom:18px;box-shadow:var(--shadow);transition:box-shadow .2s}
+.q-card:hover{box-shadow:0 8px 32px rgba(11,26,46,.13)}
+.q-head{background:var(--navy);color:#fff;padding:11px 18px;display:flex;align-items:center;gap:10px}
+.q-num{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--gold);line-height:1}
+.q-tag{font-size:10px;font-weight:700;letter-spacing:1px;background:var(--gold);color:var(--navy);padding:3px 9px;white-space:nowrap}
+.q-diff{font-size:10px;color:rgba(255,255,255,.4);margin-left:auto;white-space:nowrap}
+.q-body{padding:18px 20px}
+.passage{background:#f7f4ee;border-left:3px solid var(--gold);padding:14px 18px;margin-bottom:14px;font-size:14px;line-height:1.9;font-family:'Georgia',serif}
+.passage em{font-style:normal;text-decoration:underline;text-decoration-color:var(--gold);font-weight:700}
+.q-text{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:14px;line-height:1.7}
+.opts{list-style:none;display:grid;gap:7px}
+.opts li{display:flex;align-items:flex-start;gap:9px;padding:9px 13px;border:1.5px solid var(--border);cursor:pointer;font-size:13.5px;line-height:1.6;transition:all .15s;user-select:none}
+.opts li:hover:not(.locked){border-color:var(--navy);background:#eef2f8}
+.opts li.selected{border-color:var(--navy);background:#eaf0ff}
+.opts li.correct{border-color:var(--green)!important;background:#edfaf3!important;color:var(--green)!important}
+.opts li.wrong{border-color:var(--red)!important;background:#fdf0ef!important;color:var(--red)!important}
+.opts li.locked{cursor:default}
+.opt-lbl{font-weight:900;font-family:'Playfair Display',serif;font-size:15px;color:var(--muted);flex-shrink:0;line-height:1.4}
+.opts li.correct .opt-lbl{color:var(--green)}
+.opts li.wrong .opt-lbl{color:var(--red)}
+.q-actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.btn-check{padding:9px 24px;background:var(--navy);color:var(--gold);font-weight:700;font-size:12px;letter-spacing:.8px;border:2px solid var(--navy);cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif}
+.btn-check:hover{background:transparent;color:var(--navy)}
+.btn-check:disabled{opacity:.35;cursor:default}
+.ans-box{display:none;margin-top:12px;padding:14px 16px;font-size:13px;line-height:1.85;border-left:3px solid var(--green);background:#f0faf5}
+.ans-box.wrong-a{border-color:var(--red);background:#fdf5f4}
+.ans-box.show{display:block;animation:fadeUp .2s}
+.ans-box strong{color:var(--navy)}
+
+/* ── GENERATE AREA ── */
+.gen-panel{background:var(--white);border:1px solid var(--border);padding:24px;margin-bottom:24px;box-shadow:var(--shadow)}
+.gen-title{font-family:'Noto Serif JP',serif;font-size:16px;font-weight:900;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.gen-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.gen-select{padding:9px 14px;border:1.5px solid var(--border);font-family:'Noto Sans JP',sans-serif;font-size:13px;color:var(--navy);background:var(--cream2);cursor:pointer;outline:none}
+.gen-select:focus{border-color:var(--gold)}
+.btn-gen{padding:9px 28px;background:var(--gold);color:var(--navy);font-weight:700;font-size:13px;border:none;cursor:pointer;transition:opacity .2s;font-family:'Noto Sans JP',sans-serif;letter-spacing:.5px}
+.btn-gen:hover{opacity:.85}
+.btn-gen:disabled{opacity:.4;cursor:default}
+.gen-status{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.spinner{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── HISTORY ── */
+.hist-filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.hist-filter{padding:6px 14px;border:1.5px solid var(--border);background:var(--white);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;font-family:'Noto Sans JP',sans-serif}
+.hist-filter.active,.hist-filter:hover{border-color:var(--navy);background:var(--navy);color:var(--gold)}
+.hist-list{display:grid;gap:10px}
+.hist-item{background:var(--white);border:1px solid var(--border);padding:14px 18px;display:grid;grid-template-columns:auto 1fr auto;gap:10px 16px;align-items:start}
+.hist-badge{width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;margin-top:2px}
+.hist-q{font-size:13px;font-weight:700;color:var(--navy);line-height:1.5;margin-bottom:4px}
+.hist-meta{font-size:11px;color:var(--muted);display:flex;gap:10px;flex-wrap:wrap}
+.hist-exp{font-size:12px;color:#555;line-height:1.7;margin-top:6px;padding-top:6px;border-top:1px solid var(--border)}
+.hist-date{font-size:11px;color:var(--muted);white-space:nowrap;text-align:right}
+.no-hist{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+
+/* ── ANALYSIS ── */
+.analysis-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:24px}
+.ana-card{background:var(--white);border:1px solid var(--border);padding:18px 20px;box-shadow:var(--shadow)}
+.ana-card h4{font-size:13px;font-weight:900;color:var(--navy);margin-bottom:10px;padding-bottom:7px;border-bottom:2px solid var(--gold)}
+.ana-card p,.ana-card li{font-size:13px;line-height:1.85;color:#444}
+.ana-card ul{padding-left:16px}
+.weak-tag{display:inline-block;padding:3px 9px;font-size:11px;font-weight:700;margin:2px;letter-spacing:.3px}
+.weak-bad{background:#ffeeed;color:var(--red);border:1px solid #ffd0ce}
+.weak-ok{background:#edfaf3;color:var(--green);border:1px solid #c3eed8}
+.weak-mid{background:#fff8e0;color:#b07e00;border:1px solid #ffe599}
+.ai-analysis{background:var(--navy);color:#fff;padding:20px 22px;border-left:4px solid var(--gold);margin-top:20px;font-size:13px;line-height:1.9;min-height:60px}
+.ai-analysis strong{color:var(--gold)}
+.btn-analyze{padding:10px 28px;background:var(--navy);color:var(--gold);font-weight:700;font-size:13px;border:2px solid var(--navy);cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;margin-bottom:16px}
+.btn-analyze:hover{background:transparent;color:var(--navy)}
+.btn-analyze:disabled{opacity:.4;cursor:default}
+
+/* ── LEADERBOARD ── */
+.lb-wrap{background:var(--white);border:1px solid var(--border);overflow:hidden;margin-top:20px;box-shadow:var(--shadow)}
+.lb-head{background:var(--navy);color:#fff;padding:12px 20px;font-family:'Noto Serif JP',serif;font-size:15px;font-weight:900;display:flex;justify-content:space-between;align-items:center}
+.lb-head span{font-size:11px;color:rgba(255,255,255,.4);font-family:'Noto Sans JP',sans-serif;font-weight:400}
+.lb-row{display:grid;grid-template-columns:40px 1fr auto auto;gap:10px;align-items:center;padding:11px 18px;border-bottom:1px solid var(--border);font-size:13px}
+.lb-row:last-child{border:none}
+.lb-row.you{background:#f0f4ff}
+.lb-rank{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--muted);text-align:center}
+.lb-rank.gold{color:#c9a84c}
+.lb-rank.silver{color:#9e9e9e}
+.lb-rank.bronze{color:#cd7f32}
+.lb-name{font-weight:700;color:var(--navy)}
+.lb-score{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--navy)}
+.lb-date{font-size:11px;color:var(--muted)}
+.no-lb{text-align:center;padding:30px;color:var(--muted);font-size:13px}
+
+/* ── TIPS ── */
+.tips-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-bottom:24px}
+.tip-card{background:var(--white);border:1px solid var(--border);padding:18px}
+.tip-card h4{font-size:13px;font-weight:900;color:var(--navy);margin-bottom:8px;padding-bottom:7px;border-bottom:2px solid var(--gold)}
+.tip-card p{font-size:13px;line-height:1.85;color:#444}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);color:var(--gold);padding:12px 20px;font-size:13px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:9999;opacity:0;transform:translateY(12px);transition:all .3s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* ── AUTH OVERLAY ── */
+.auth-overlay{
+  position:fixed;inset:0;background:var(--navy);z-index:10000;
+  display:flex;align-items:center;justify-content:center;
+  background-image:radial-gradient(ellipse at 30% 60%,rgba(201,168,76,.12) 0%,transparent 55%),
+    radial-gradient(ellipse at 75% 25%,rgba(201,168,76,.07) 0%,transparent 50%);
+}
+.auth-box{
+  background:rgba(255,255,255,.04);border:1px solid rgba(201,168,76,.3);
+  padding:48px 44px;max-width:400px;width:90%;text-align:center;
+  backdrop-filter:blur(4px);
+}
+.auth-logo{font-size:10px;font-weight:700;letter-spacing:3px;color:var(--gold);margin-bottom:20px;display:block}
+.auth-title{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:900;color:#fff;margin-bottom:6px}
+.auth-sub{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:32px;line-height:1.7}
+.auth-input{
+  width:100%;padding:13px 18px;background:rgba(255,255,255,.07);
+  border:1.5px solid rgba(201,168,76,.3);color:#fff;font-size:16px;
+  font-family:'Noto Sans JP',sans-serif;outline:none;letter-spacing:3px;
+  text-align:center;margin-bottom:12px;transition:border-color .2s;
+}
+.auth-input:focus{border-color:var(--gold)}
+.auth-input::placeholder{letter-spacing:0;color:rgba(255,255,255,.25);font-size:13px}
+.auth-btn{
+  width:100%;padding:13px;background:var(--gold);color:var(--navy);
+  font-weight:900;font-size:14px;border:none;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;letter-spacing:1px;
+  transition:opacity .2s;margin-bottom:10px;
+}
+.auth-btn:hover{opacity:.85}
+.auth-err{color:#ff7a7a;font-size:12px;height:18px;margin-bottom:4px}
+.auth-hint{font-size:11px;color:rgba(255,255,255,.2);margin-top:20px}
+
+/* ── ADMIN PANEL ── */
+.admin-panel{
+  position:fixed;bottom:20px;left:20px;z-index:500;
+}
+.admin-toggle{
+  background:rgba(11,26,46,.85);color:rgba(255,255,255,.3);
+  border:1px solid rgba(255,255,255,.1);padding:6px 12px;font-size:11px;
+  cursor:pointer;font-family:'Noto Sans JP',sans-serif;backdrop-filter:blur(4px);
+}
+.admin-toggle:hover{color:var(--gold);border-color:rgba(201,168,76,.4)}
+.admin-popup{
+  display:none;position:absolute;bottom:36px;left:0;
+  background:var(--navy);border:1px solid rgba(201,168,76,.4);
+  padding:20px 22px;width:260px;box-shadow:0 8px 32px rgba(0,0,0,.4);
+}
+.admin-popup.open{display:block;animation:fadeUp .2s}
+.admin-popup h4{font-size:13px;font-weight:900;color:var(--gold);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid rgba(201,168,76,.2)}
+.admin-row{margin-bottom:12px}
+.admin-row label{font-size:11px;color:rgba(255,255,255,.45);display:block;margin-bottom:5px}
+.admin-row input{
+  width:100%;padding:8px 10px;background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.15);color:#fff;font-size:13px;
+  font-family:'Noto Sans JP',sans-serif;outline:none;
+}
+.admin-row input:focus{border-color:var(--gold)}
+.admin-save{
+  width:100%;padding:8px;background:var(--gold);color:var(--navy);
+  font-weight:700;font-size:12px;border:none;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;margin-top:4px;
+}
+.admin-save:hover{opacity:.85}
+.admin-msg{font-size:11px;color:var(--gold);margin-top:8px;min-height:16px}
+
+/* ── RESET BTN ── */
+.btn-reset{display:block;margin:24px auto 0;padding:10px 36px;background:transparent;border:2px solid var(--navy);color:var(--navy);font-weight:700;font-size:12px;cursor:pointer;letter-spacing:.8px;transition:all .2s;font-family:'Noto Sans JP',sans-serif}
+.btn-reset:hover{background:var(--navy);color:var(--gold)}
+</style>
+</head>
+<body>
+
+<!-- ── AUTH OVERLAY ── -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-box">
+    <span class="auth-logo">KANSAI GAIDAI — EXAM PREP PRO</span>
+    <div class="auth-title">アクセス認証</div>
+    <div class="auth-sub">この問題集は限定公開です。<br>招待されたパスワードを入力してください。</div>
+    <div class="auth-err" id="auth-err"></div>
+    <input class="auth-input" type="password" id="auth-pw" placeholder="パスワードを入力" onkeydown="if(event.key==='Enter')authLogin()"/>
+    <button class="auth-btn" onclick="authLogin()">入室する</button>
+    <div class="auth-hint">※ パスワードは管理者から受け取ってください</div>
+  </div>
+</div>
+
+<!-- ── ADMIN PANEL ── -->
+<div class="admin-panel" id="admin-panel" style="display:none">
+  <button class="admin-toggle" onclick="toggleAdmin()">⚙ 管理</button>
+  <div class="admin-popup" id="admin-popup">
+    <h4>🔐 管理者設定</h4>
+    <div class="admin-row">
+      <label>現在の招待パスワード</label>
+      <input type="text" id="admin-cur-pw" readonly style="color:var(--gold)"/>
+    </div>
+    <div class="admin-row">
+      <label>新しい招待パスワードに変更</label>
+      <input type="password" id="admin-new-pw" placeholder="新しいパスワード（4文字以上）"/>
+    </div>
+    <div class="admin-row">
+      <label>管理者パスワードで認証</label>
+      <input type="password" id="admin-master-pw" placeholder="管理者パスワード"/>
+    </div>
+    <button class="admin-save" onclick="changePassword()">パスワードを更新</button>
+    <div class="admin-msg" id="admin-msg"></div>
+  </div>
+</div>
+
+<header>
+  <div class="h-inner">
+    <div class="h-left">
+      <div class="badge">KANSAI GAIDAI — EXAM PREP PRO</div>
+      <h1>関西外国語大学<br><span>受験対策問題集</span></h1>
+    </div>
+    <div class="h-right">
+      <div class="user-input-wrap" id="user-setup">
+        <input type="text" id="username-input" placeholder="ニックネームを入力" maxlength="20"/>
+        <button class="btn-set-user" onclick="setUser()">スタート</button>
+      </div>
+      <div id="user-display" style="display:none">
+        <span class="user-tag">学習中: <strong id="uname-show">—</strong></span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="nav-wrap">
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('quiz')">📝 練習問題</button>
+    <button class="nav-tab" onclick="switchTab('challenge')">✨ 新問題チャレンジ</button>
+    <button class="nav-tab" onclick="switchTab('history')">📋 学習履歴</button>
+    <button class="nav-tab" onclick="switchTab('analysis')">🔍 弱点分析</button>
+    <button class="nav-tab" onclick="switchTab('ranking')">🏆 ランキング</button>
+    <button class="nav-tab" onclick="switchTab('tips')">💡 攻略ポイント</button>
+  </div>
+</div>
+
+<main>
+
+<!-- ===== 練習問題 ===== -->
+<div class="sec active" id="sec-quiz">
+  <h2 class="sec-title"><span class="sec-icon">問</span>練習問題（固定12問）</h2>
+  <div class="info-box"><strong>【英語 A方式対応】</strong> 長文読解・語法・正誤 ／ <strong>【現代文】</strong> 評論・語彙・接続語<br>回答すると履歴が自動保存されます。</div>
+
+  <div class="stats-bar">
+    <div class="stat-item"><div class="lbl">SCORE</div><div class="val" id="q-score">0 <span>/ 12</span></div></div>
+    <div class="prog-bar"><div class="prog-fill" id="q-bar"></div></div>
+  </div>
+
+  <!-- 英語 Q1〜6 -->
+  <div id="quiz-cards"></div>
+  <button class="btn-reset" onclick="resetQuiz()">🔄 リセット</button>
+</div>
+
+<!-- ===== 新問題チャレンジ ===== -->
+<div class="sec" id="sec-challenge">
+  <h2 class="sec-title"><span class="sec-icon">✨</span>AIが新問題を生成</h2>
+  <div class="info-box"><strong>苦手ジャンルを指定して新しい問題にチャレンジ！</strong> AIが関西外大の出題傾向に合わせた問題を生成します。</div>
+
+  <div class="gen-panel">
+    <div class="gen-title">⚙ 問題設定</div>
+    <div class="gen-controls">
+      <select class="gen-select" id="gen-subject">
+        <option value="英語長文読解">英語 — 長文読解</option>
+        <option value="英語語法パラフレーズ">英語 — 語法パラフレーズ</option>
+        <option value="英語正誤問題">英語 — 正誤問題</option>
+        <option value="現代文内容理解">現代文 — 内容理解</option>
+        <option value="現代文語彙漢字">現代文 — 語彙・漢字</option>
+        <option value="現代文接続語指示語">現代文 — 接続語・指示語</option>
+      </select>
+      <select class="gen-select" id="gen-diff">
+        <option value="標準">標準</option>
+        <option value="やや難">やや難</option>
+        <option value="難">難</option>
+      </select>
+      <button class="btn-gen" id="btn-gen" onclick="generateQuestion()">問題を生成する</button>
+    </div>
+    <div class="gen-status" id="gen-status"></div>
+  </div>
+
+  <div id="gen-area"></div>
+</div>
+
+<!-- ===== 学習履歴 ===== -->
+<div class="sec" id="sec-history">
+  <h2 class="sec-title"><span class="sec-icon">📋</span>学習履歴</h2>
+  <div class="info-box"><strong>あなたの回答履歴</strong>（このデバイス・ユーザー名で保存）。正解・不正解・解説を振り返れます。</div>
+  <div class="hist-filters">
+    <button class="hist-filter active" onclick="filterHist('all',this)">すべて</button>
+    <button class="hist-filter" onclick="filterHist('correct',this)">✅ 正解</button>
+    <button class="hist-filter" onclick="filterHist('wrong',this)">❌ 不正解</button>
+    <button class="hist-filter" onclick="filterHist('英語',this)">英語</button>
+    <button class="hist-filter" onclick="filterHist('現代文',this)">現代文</button>
+  </div>
+  <div class="hist-list" id="hist-list"><div class="no-hist">まだ回答履歴がありません。<br>問題を解いてみましょう！</div></div>
+</div>
+
+<!-- ===== 弱点分析 ===== -->
+<div class="sec" id="sec-analysis">
+  <h2 class="sec-title"><span class="sec-icon">🔍</span>弱点分析</h2>
+
+  <div class="analysis-grid" id="ana-grid"></div>
+
+  <button class="btn-analyze" id="btn-analyze" onclick="runAnalysis()">🤖 AIに弱点を分析してもらう</button>
+  <div class="ai-analysis" id="ai-ana-box" style="display:none"></div>
+</div>
+
+<!-- ===== ランキング ===== -->
+<div class="sec" id="sec-ranking">
+  <h2 class="sec-title"><span class="sec-icon">🏆</span>みんなのランキング</h2>
+  <div class="info-box"><strong>全ユーザー共有のスコアボード。</strong> 練習問題・チャレンジ問題の累計正解数で競います！</div>
+  <div class="lb-wrap">
+    <div class="lb-head">ランキング <span id="lb-updated">—</span></div>
+    <div id="lb-body"><div class="no-lb">読み込み中...</div></div>
+  </div>
+</div>
+
+<!-- ===== 攻略ポイント ===== -->
+<div class="sec" id="sec-tips">
+  <h2 class="sec-title"><span class="sec-icon">💡</span>攻略ポイント</h2>
+  <div class="info-box"><strong>偏差値50〜60帯向け。</strong> 出題傾向を把握して効率的に得点を伸ばそう。</div>
+  <h3 style="font-family:'Noto Serif JP';font-size:16px;color:var(--navy);margin:0 0 14px;padding-left:10px;border-left:4px solid var(--gold)">英語の攻略法</h3>
+  <div class="tips-grid">
+    <div class="tip-card"><h4>① 長文読解が最重要</h4><p>配点の4割以上。800語前後の英文を精読する練習を最優先に。空所補充・パラフレーズ・内容一致の3パターンを反復しよう。</p></div>
+    <div class="tip-card"><h4>② 語彙は文脈推測も鍛える</h4><p>英検準1級レベルの語彙も出題される。単語帳だけでなく未知語を文脈から読み解く練習も欠かせない。</p></div>
+    <div class="tip-card"><h4>③ 正誤問題は消去法</h4><p>3単現のs・to不定詞とGerund・主語と動詞の一致など頻出ポイントを整理して誤りを素早く見つける練習を。</p></div>
+    <div class="tip-card"><h4>④ 文整序は接続詞が鍵</h4><p>For example / However / As a result などと代名詞（This/It）の指示対象を手がかりに順序を決める。</p></div>
+  </div>
+  <h3 style="font-family:'Noto Serif JP';font-size:16px;color:var(--navy);margin:8px 0 14px;padding-left:10px;border-left:4px solid var(--gold)">現代文の攻略法</h3>
+  <div class="tips-grid">
+    <div class="tip-card"><h4>① 逆接の後に主張あり</h4><p>「しかし・だが・ところが」の後に筆者の主張が来ることが多い。段落末尾も要チェック。</p></div>
+    <div class="tip-card"><h4>② 指示語は必ず直前に戻る</h4><p>「これ・このこと・かかる」が出たら直前の文を確認。指示語の誤読が最大の失点原因。</p></div>
+    <div class="tip-card"><h4>③ 評論頻出語彙を覚える</h4><p>逡巡・恣意的・パラダイム・アイデンティティ・規範・逆説など評論文特有の語彙を計画的に学習。</p></div>
+    <div class="tip-card"><h4>④ 古文も必ず対策</h4><p>助動詞・助詞の基本事項は必須。極端に難しい問題は少ないが、単語・文法の基礎固めを怠らない。</p></div>
+  </div>
+</div>
+
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─────────────────────────────────────
+//  DATA — 固定12問
+// ─────────────────────────────────────
+const FIXED_QS = [
+  {id:'fq1',subject:'英語',type:'長文読解',diff:'標準',
+   passage:'Social media has dramatically changed the way people communicate. Unlike traditional media, it allows users to <em>( 1 )</em> content instantly with millions of followers.',
+   q:'空所 ( 1 ) に入る最も適切な語句を選びなさい。',
+   opts:['consume','share','delete','ignore'],correct:1,
+   exp:'share（共有する）が正解。SNSで「コンテンツを共有する」のが自然。A:消費、C:削除、D:無視は文意に合わない。'},
+  {id:'fq2',subject:'英語',type:'パラフレーズ',diff:'標準',
+   passage:'The government pledged to <em>mitigate</em> the effects of climate change.',
+   q:'下線部 "mitigate" の意味として最も近いものを選びなさい。',
+   opts:['aggravate','lessen','investigate','abandon'],correct:1,
+   exp:'mitigate＝「軽減する・和らげる」。B: lessenが最も近い。A:悪化させる（反意語）。'},
+  {id:'fq3',subject:'英語',type:'内容一致',diff:'標準',
+   passage:'Remote work became popular since 2020. Productivity did not decline as expected. However, some felt isolated, suggesting a hybrid model may offer the best of both worlds.',
+   q:'本文の内容と一致するものを選びなさい。',
+   opts:['全企業で生産性が低下した','ハイブリッドモデルが両方の利点を持つ可能性がある','孤立感を覚えた社員はいなかった','2020年以前からリモートワークは主流だった'],correct:1,
+   exp:'"may offer the best of both worlds" とあり、Bが正解。A:低下しなかった。C:孤立感を覚えた社員がいた。D:2020年以降に普及。'},
+  {id:'fq4',subject:'英語',type:'パラフレーズ',diff:'やや難',
+   passage:'The new policy is <em>detrimental</em> to small businesses.',
+   q:'下線部 "detrimental" の意味として最も近いものを選びなさい。',
+   opts:['beneficial','harmful','neutral','attractive'],correct:1,
+   exp:'detrimental＝「有害な」。B: harmfulが最も近い。Aは反意語。'},
+  {id:'fq5',subject:'英語',type:'正誤問題',diff:'標準',
+   passage:null,
+   q:'文法・語法上、正しい英文を選びなさい。',
+   opts:['She suggested to go to the museum.','He insisted that she attend the meeting.','They enjoy to play tennis.','I am used to study late at night.'],correct:1,
+   exp:'B: insist that S (should) 原形 — 仮定法現在の正しい形。A:suggest+-ing が正しい。C:enjoy+-ingが正しい。D:be used to +-ingが正しい。'},
+  {id:'fq6',subject:'英語',type:'正誤問題',diff:'やや難',
+   passage:null,
+   q:'文法・語法上、正しい英文を選びなさい。',
+   opts:['Neither of the students were present.','The number of applicants has increased.','A number of students is absent today.','Everyone in the group have their own opinion.'],correct:1,
+   exp:'B: The number of ～ は単数→hasが正しい。A:Neitherは単数→was。C:A number of～は複数→are。D:Everyoneは単数→has。'},
+  {id:'fq7',subject:'現代文',type:'内容理解',diff:'標準',
+   passage:'言語は単なるコミュニケーションの道具ではない。それは思考そのものを形成し、私たちが世界をどのように認識するかを規定する。異なる言語を話す人々が同じ現象を異なる仕方で理解するのは、まさにこの理由による。',
+   q:'この文章で筆者が最も主張したいことは何か。',
+   opts:['言語は主に情報を伝えるための手段である','言語は思考や世界認識のあり方そのものを規定する','多くの言語を学ぶことで知識が増える','言語の違いは文化の違いを反映している'],correct:1,
+   exp:'「思考そのものを形成し…認識するかを規定する」が主張の核心。アは筆者が否定している内容。ウ・エは本文に根拠なし。'},
+  {id:'fq8',subject:'現代文',type:'指示語',diff:'標準',
+   passage:'近代化とは合理性の追求である。しかし<u>それ</u>は同時に、人間が育んできた共同体的な絆や伝統的価値観を解体することでもあった。<u>このこと</u>が現代社会に深刻な孤立の問題をもたらした。',
+   q:'傍線部「このこと」が指す内容として最も適切なものを選びなさい。',
+   opts:['近代化による合理性の追求','共同体的な絆や伝統的価値観が解体されたこと','現代社会に孤立の問題が生じたこと','近代化が急速に進んだこと'],correct:1,
+   exp:'指示語「このこと」は直前の文「共同体的な絆や価値観を解体すること」を指す。ウはこのことの結果として述べられている。'},
+  {id:'fq9',subject:'現代文',type:'接続語',diff:'標準',
+   passage:'科学技術の発達は人々の生活を豊かにした。（　　）、環境破壊や格差拡大といった深刻な問題も引き起こしてきた。',
+   q:'空欄に入る接続語として最も適切なものを選びなさい。',
+   opts:['したがって','すなわち','一方で','なぜなら'],correct:2,
+   exp:'前文（豊か）と後文（問題）は対比・逆接の関係。「一方で」が最適。「したがって」は順接結果、「すなわち」は言い換え、「なぜなら」は理由。'},
+  {id:'fq10',subject:'現代文',type:'語彙',diff:'基礎',
+   passage:null,
+   q:'「逡巡（　）」の正しい読み方を選びなさい。',
+   opts:['しゅんじゅん','じゅんしゅん','しゅんじゅ','しゅんよう'],correct:0,
+   exp:'逡巡（しゅんじゅん）＝ためらうこと。評論文頻出語。'},
+  {id:'fq11',subject:'現代文',type:'語彙',diff:'標準',
+   passage:null,
+   q:'「抽象的」の対義語として最も適切なものを選びなさい。',
+   opts:['観念的','具体的','概念的','理論的'],correct:1,
+   exp:'「抽象的」⇔「具体的」が対義語。評論文では抽象（一般論）←→具体（例示）の構造を意識することが読解の基本。'},
+  {id:'fq12',subject:'現代文',type:'要旨',diff:'やや難',
+   passage:'グローバル化は文化の均質化をもたらす一方、地域固有のものへの関心が高まるという逆説的な現象も生み出している。地域固有の食文化や伝統工芸が世界的に注目されるようになったのはその一例だ。',
+   q:'傍線部「逆説的な現象」として最も適切なものを選びなさい。',
+   opts:['グローバル化に反対する運動が活発になること','地域固有の文化が世界的に注目されること','人々が自国文化のみを好むようになること','地方の人口が増加し都市が衰退すること'],correct:1,
+   exp:'直後の「地域固有の食文化や伝統工芸が世界的に注目される」が具体例として示されており、Bが正解。'},
+];
+
+// ─────────────────────────────────────
+//  STATE
+// ─────────────────────────────────────
+let currentUser = localStorage.getItem('kguser') || '';
+let quizScore = 0;
+let quizAnswered = new Set();
+let histFilter = 'all';
+
+// ─────────────────────────────────────
+//  STORAGE HELPERS (persistent)
+// ─────────────────────────────────────
+async function saveRecord(record) {
+  try {
+    const key = `hist:${currentUser}:${Date.now()}`;
+    await window.storage.set(key, JSON.stringify(record));
+  } catch(e) { console.error(e); }
+}
+
+async function loadHistory() {
+  if (!currentUser) return [];
+  try {
+    const res = await window.storage.list(`hist:${currentUser}:`);
+    if (!res || !res.keys) return [];
+    const items = await Promise.all(res.keys.map(async k => {
+      try { const r = await window.storage.get(k); return r ? JSON.parse(r.value) : null; }
+      catch { return null; }
+    }));
+    return items.filter(Boolean).sort((a,b) => new Date(b.date)-new Date(a.date));
+  } catch(e) { return []; }
+}
+
+async function updateLeaderboard() {
+  if (!currentUser) return;
+  try {
+    let totalCorrect = 0;
+    const hist = await loadHistory();
+    hist.forEach(h => { if(h.correct) totalCorrect++; });
+    await window.storage.set(`lb:${currentUser}`, JSON.stringify({
+      name: currentUser, score: totalCorrect, date: new Date().toLocaleDateString('ja-JP')
+    }), true);
+  } catch(e) {}
+}
+
+async function loadLeaderboard() {
+  try {
+    const res = await window.storage.list('lb:', true);
+    if (!res || !res.keys) return [];
+    const items = await Promise.all(res.keys.map(async k => {
+      try { const r = await window.storage.get(k, true); return r ? JSON.parse(r.value) : null; }
+      catch { return null; }
+    }));
+    return items.filter(Boolean).sort((a,b) => b.score - a.score);
+  } catch(e) { return []; }
+}
+
+// ─────────────────────────────────────
+//  USER
+// ─────────────────────────────────────
+function setUser() {
+  const v = document.getElementById('username-input').value.trim();
+  if (!v) { showToast('ニックネームを入力してください'); return; }
+  currentUser = v;
+  localStorage.setItem('kguser', v);
+  document.getElementById('user-setup').style.display = 'none';
+  document.getElementById('user-display').style.display = 'block';
+  document.getElementById('uname-show').textContent = v;
+  showToast(`ようこそ、${v}さん！`);
+}
+
+function initUser() {
+  if (currentUser) {
+    document.getElementById('username-input').value = currentUser;
+    document.getElementById('user-setup').style.display = 'none';
+    document.getElementById('user-display').style.display = 'block';
+    document.getElementById('uname-show').textContent = currentUser;
+  }
+}
+
+// ─────────────────────────────────────
+//  TABS
+// ─────────────────────────────────────
+function switchTab(id) {
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  event.target.classList.add('active');
+  if (id==='history') renderHistory();
+  if (id==='analysis') renderAnalysis();
+  if (id==='ranking') renderLeaderboard();
+}
+
+// ─────────────────────────────────────
+//  QUIZ RENDER
+// ─────────────────────────────────────
+function renderQuiz() {
+  const container = document.getElementById('quiz-cards');
+  container.innerHTML = FIXED_QS.map((q,i) => buildQCard(q, i+1, 'q')).join('');
+}
+
+function buildQCard(q, num, prefix) {
+  const pid = prefix + q.id;
+  const passageHtml = q.passage
+    ? `<div class="passage" style="${q.subject==='現代文'?'font-family:Noto Serif JP,serif':''}">${q.passage}</div>`
+    : '';
+  const optsHtml = q.opts.map((o,i) => {
+    const lbl = String.fromCharCode(65+i);
+    return `<li id="${pid}-o${i}" onclick="selectOpt('${pid}',${i})">`
+         + `<span class="opt-lbl">${lbl}</span>${o}</li>`;
+  }).join('');
+  return `
+  <div class="q-card" id="${pid}-card">
+    <div class="q-head">
+      <span class="q-num">Q${num}</span>
+      <span class="q-tag">${q.subject} — ${q.type}</span>
+      <span class="q-diff">${q.diff}</span>
+    </div>
+    <div class="q-body">
+      ${passageHtml}
+      <div class="q-text">${q.q}</div>
+      <ul class="opts" id="${pid}-opts">${optsHtml}</ul>
+      <div class="q-actions">
+        <button class="btn-check" id="${pid}-btn" onclick="checkOpt('${pid}','${q.id}','${q.subject}','${q.type}',${q.correct},'${escExp(q.exp)}')">答え合わせ</button>
+      </div>
+      <div class="ans-box" id="${pid}-ans"></div>
+    </div>
+  </div>`;
+}
+
+function escExp(s){ return s.replace(/'/g,"&#39;").replace(/"/g,"&quot;"); }
+
+function selectOpt(pid, idx) {
+  const opts = document.getElementById(pid+'-opts');
+  if (!opts) return;
+  if (opts.querySelector('.locked')) return;
+  opts.querySelectorAll('li').forEach(li => li.classList.remove('selected'));
+  document.getElementById(pid+'-o'+idx).classList.add('selected');
+}
+
+async function checkOpt(pid, qid, subject, type, correct, exp) {
+  const opts = document.getElementById(pid+'-opts');
+  const ans = document.getElementById(pid+'-ans');
+  const btn = document.getElementById(pid+'-btn');
+  const sel = opts.querySelector('.selected');
+  if (!sel) { ans.innerHTML='<strong>⚠ 選択肢を選んでください。</strong>'; ans.className='ans-box show'; return; }
+
+  const selIdx = parseInt(sel.id.split('-o')[1]);
+  const isOk = selIdx === correct;
+  btn.disabled = true;
+  opts.querySelectorAll('li').forEach((li,i) => {
+    li.classList.add('locked');
+    if (i===correct) li.classList.add('correct');
+    else if (i===selIdx && !isOk) li.classList.add('wrong');
+  });
+  ans.innerHTML = `<strong>${isOk?'✅ 正解！':'❌ 不正解（正解：'+String.fromCharCode(65+correct)+'）'}</strong><br>${exp}`;
+  ans.className = 'ans-box show' + (isOk?'':' wrong-a');
+
+  // score (quiz only)
+  const isQuiz = pid.startsWith('qfq');
+  if (isQuiz && !quizAnswered.has(qid)) {
+    quizAnswered.add(qid);
+    if (isOk) quizScore++;
+    document.getElementById('q-score').innerHTML = quizScore+' <span>/ '+FIXED_QS.length+'</span>';
+    document.getElementById('q-bar').style.width = (quizScore/FIXED_QS.length*100)+'%';
+  }
+
+  // save history
+  if (currentUser) {
+    const q = FIXED_QS.find(x=>x.id===qid) || {q:'(生成問題)',passage:null};
+    await saveRecord({
+      date: new Date().toLocaleString('ja-JP'),
+      subject, type,
+      question: q.q,
+      correct: isOk,
+      explanation: exp
+    });
+    await updateLeaderboard();
+  }
+}
+
+function resetQuiz() {
+  if(!confirm('練習問題の回答をリセットしますか？')) return;
+  quizScore=0; quizAnswered.clear();
+  document.getElementById('q-score').innerHTML='0 <span>/ 12</span>';
+  document.getElementById('q-bar').style.width='0';
+  renderQuiz();
+  showToast('リセットしました');
+}
+
+// ─────────────────────────────────────
+//  AI QUESTION GENERATION
+// ─────────────────────────────────────
+async function generateQuestion() {
+  if (!currentUser) { showToast('まずニックネームを入力してください'); return; }
+  const subject = document.getElementById('gen-subject').value;
+  const diff = document.getElementById('gen-diff').value;
+  const btn = document.getElementById('btn-gen');
+  const status = document.getElementById('gen-status');
+  const area = document.getElementById('gen-area');
+
+  btn.disabled = true;
+  status.innerHTML = '<span class="spinner"></span> AIが問題を生成中...';
+  area.innerHTML = '';
+
+  const prompt = `あなたは関西外国語大学の入試問題を作成する専門家です。
+以下の条件で問題を1問作成してください。
+
+科目・ジャンル：${subject}
+難易度：${diff}
+形式：4択選択肢問題
+
+必ず以下のJSON形式のみで返答してください（他のテキスト不要）：
+{
+  "subject": "${subject.includes('英語')?'英語':'現代文'}",
+  "type": "${subject.replace(/英語|現代文|—| /g,'').trim()}",
+  "diff": "${diff}",
+  "passage": "問題文・英文（ない場合はnull）",
+  "q": "設問文",
+  "opts": ["選択肢A","選択肢B","選択肢C","選択肢D"],
+  "correct": 正解のインデックス（0〜3の整数）,
+  "exp": "解説文（なぜ正解か、他の選択肢がなぜ違うか）"
+}
+
+注意：
+- 英語問題なら英文を使い、実際の入試に近い内容にする
+- 現代文なら評論文調の日本語で
+- 解説は丁寧に100字程度で
+- JSONのみを返す（\`\`\`不要）`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+    const data = await res.json();
+    let text = data.content.map(c=>c.type==='text'?c.text:'').join('').trim();
+    text = text.replace(/```json|```/g,'').trim();
+    const q = JSON.parse(text);
+    q.id = 'gen_'+Date.now();
+
+    status.innerHTML = '✅ 生成完了！';
+    btn.disabled = false;
+
+    const cardHtml = buildQCard(q, '✨', 'g') + `
+    <div style="text-align:center;margin-top:-10px;margin-bottom:24px">
+      <button class="btn-reset" onclick="generateQuestion()" style="margin:0 auto">🔄 別の問題を生成</button>
+    </div>`;
+    area.innerHTML = cardHtml;
+  } catch(e) {
+    status.innerHTML = '⚠ 生成に失敗しました。再試行してください。';
+    btn.disabled = false;
+    console.error(e);
+  }
+}
+
+// ─────────────────────────────────────
+//  HISTORY
+// ─────────────────────────────────────
+function filterHist(f, el) {
+  histFilter = f;
+  document.querySelectorAll('.hist-filter').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');
+  renderHistory();
+}
+
+async function renderHistory() {
+  const list = document.getElementById('hist-list');
+  if (!currentUser) { list.innerHTML='<div class="no-hist">ニックネームを設定してください。</div>'; return; }
+  list.innerHTML='<div class="no-hist"><span class="spinner"></span> 読み込み中...</div>';
+  const hist = await loadHistory();
+  const filtered = hist.filter(h => {
+    if (histFilter==='correct') return h.correct;
+    if (histFilter==='wrong') return !h.correct;
+    if (histFilter==='英語') return h.subject==='英語';
+    if (histFilter==='現代文') return h.subject==='現代文';
+    return true;
+  });
+  if (!filtered.length) { list.innerHTML='<div class="no-hist">該当する履歴がありません。</div>'; return; }
+  list.innerHTML = filtered.map(h=>`
+    <div class="hist-item">
+      <div class="hist-badge">${h.correct?'✅':'❌'}</div>
+      <div>
+        <div class="hist-q">${h.question}</div>
+        <div class="hist-meta">
+          <span>${h.subject}</span><span>${h.type||''}</span>
+        </div>
+        <div class="hist-exp">${h.explanation}</div>
+      </div>
+      <div class="hist-date">${h.date}</div>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────
+//  ANALYSIS
+// ─────────────────────────────────────
+async function renderAnalysis() {
+  const grid = document.getElementById('ana-grid');
+  if (!currentUser) { grid.innerHTML='<div class="ana-card"><p>ニックネームを設定してください。</p></div>'; return; }
+  const hist = await loadHistory();
+  if (!hist.length) { grid.innerHTML='<div class="ana-card"><p>まだ回答履歴がありません。</p></div>'; return; }
+
+  // Aggregate
+  const byType = {};
+  const bySubject = {英語:{c:0,t:0}, 現代文:{c:0,t:0}};
+  hist.forEach(h=>{
+    const k = (h.subject||'')+'/'+(h.type||'');
+    if (!byType[k]) byType[k]={c:0,t:0,label:h.type||''};
+    byType[k].t++;
+    if(h.correct) byType[k].c++;
+    if(bySubject[h.subject]) { bySubject[h.subject].t++; if(h.correct) bySubject[h.subject].c++; }
+  });
+  const total = hist.length;
+  const correct = hist.filter(h=>h.correct).length;
+
+  const weakTypes = Object.entries(byType)
+    .filter(([,v])=>v.t>=2)
+    .map(([k,v])=>({...v, key:k, rate:v.c/v.t}))
+    .sort((a,b)=>a.rate-b.rate);
+
+  grid.innerHTML = `
+    <div class="ana-card">
+      <h4>📊 総合成績</h4>
+      <p>総回答数：<strong>${total}</strong> 問<br>
+         正解数：<strong>${correct}</strong> 問<br>
+         正答率：<strong>${total?Math.round(correct/total*100):0}%</strong></p>
+    </div>
+    <div class="ana-card">
+      <h4>📘 英語</h4>
+      <p>正答率：<strong>${bySubject.英語.t?Math.round(bySubject.英語.c/bySubject.英語.t*100):0}%</strong><br>
+         回答数：${bySubject.英語.t}問 / 正解：${bySubject.英語.c}問</p>
+    </div>
+    <div class="ana-card">
+      <h4>📖 現代文</h4>
+      <p>正答率：<strong>${bySubject.現代文.t?Math.round(bySubject.現代文.c/bySubject.現代文.t*100):0}%</strong><br>
+         回答数：${bySubject.現代文.t}問 / 正解：${bySubject.現代文.c}問</p>
+    </div>
+    <div class="ana-card">
+      <h4>🎯 ジャンル別正答率</h4>
+      <p>${weakTypes.length ? weakTypes.slice(0,6).map(w=>`
+        <span class="weak-tag ${w.rate<0.5?'weak-bad':w.rate<0.75?'weak-mid':'weak-ok'}">${w.label} ${Math.round(w.rate*100)}%</span>
+      `).join('') : '2問以上回答すると表示されます。'}</p>
+    </div>`;
+}
+
+async function runAnalysis() {
+  if (!currentUser) { showToast('ニックネームを設定してください'); return; }
+  const btn = document.getElementById('btn-analyze');
+  const box = document.getElementById('ai-ana-box');
+  btn.disabled = true;
+  btn.textContent = '分析中...';
+  box.style.display='block';
+  box.innerHTML = '<span class="spinner"></span> AIが分析しています...';
+
+  const hist = await loadHistory();
+  if (hist.length < 3) {
+    box.innerHTML = '<strong>ヒント：</strong> 3問以上回答すると詳細な分析ができます。';
+    btn.disabled=false; btn.textContent='🤖 AIに弱点を分析してもらう';
+    return;
+  }
+
+  const summary = {};
+  hist.forEach(h => {
+    const k = h.type||'不明';
+    if(!summary[k]) summary[k]={c:0,t:0};
+    summary[k].t++; if(h.correct) summary[k].c++;
+  });
+  const summaryText = Object.entries(summary).map(([k,v])=>`${k}: ${v.c}/${v.t}正解`).join(', ');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:500,
+        messages:[{role:'user',content:`関西外国語大学受験生の学習データを分析してください。
+ジャンル別正答率：${summaryText}
+総回答数：${hist.length}問
+
+以下の観点で200字程度の日本語でアドバイスしてください：
+1. 最も弱いジャンルと具体的な克服方法
+2. 得意なジャンルの維持方法
+3. 関西外大合格に向けた優先学習事項`}]
+      })
+    });
+    const data = await res.json();
+    const text = data.content.map(c=>c.type==='text'?c.text:'').join('');
+    box.innerHTML = '<strong>🤖 AI分析結果：</strong><br>' + text.replace(/\n/g,'<br>');
+  } catch(e) {
+    box.innerHTML = '⚠ 分析に失敗しました。';
+  }
+  btn.disabled=false; btn.textContent='🤖 AIに弱点を分析してもらう';
+}
+
+// ─────────────────────────────────────
+//  LEADERBOARD
+// ─────────────────────────────────────
+async function renderLeaderboard() {
+  const body = document.getElementById('lb-body');
+  const upd = document.getElementById('lb-updated');
+  body.innerHTML = '<div class="no-lb"><span class="spinner"></span> 読み込み中...</div>';
+  const lb = await loadLeaderboard();
+  upd.textContent = '更新: '+new Date().toLocaleTimeString('ja-JP');
+  if (!lb.length) { body.innerHTML='<div class="no-lb">まだ登録ユーザーがいません。</div>'; return; }
+  const rankColors = ['gold','silver','bronze'];
+  body.innerHTML = lb.slice(0,20).map((u,i)=>`
+    <div class="lb-row ${u.name===currentUser?'you':''}">
+      <div class="lb-rank ${rankColors[i]||''}">${i+1}</div>
+      <div class="lb-name">${u.name}${u.name===currentUser?' 👈':''}</div>
+      <div class="lb-score">${u.score}</div>
+      <div class="lb-date">${u.date}</div>
+    </div>`).join('');
+}
+
+// ─────────────────────────────────────
+//  AUTH
+//  デフォルト招待PW: kgdai2025
+//  管理者PW: admin_kgdai (変更不可・コード上で管理)
+// ─────────────────────────────────────
+const MASTER_PW = 'admin_kgdai'; // 管理者パスワード（あなただけが知るもの）
+const DEFAULT_INVITE_PW = 'kgdai2025'; // 初期招待パスワード
+
+function getInvitePW() {
+  return localStorage.getItem('invite_pw') || DEFAULT_INVITE_PW;
+}
+
+function authLogin() {
+  const input = document.getElementById('auth-pw').value;
+  const err = document.getElementById('auth-err');
+  if (input === getInvitePW()) {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    sessionStorage.setItem('auth_ok', '1');
+    // 管理者かどうか確認してadmin-cur-pwをセット
+    document.getElementById('admin-cur-pw').value = getInvitePW();
+  } else {
+    err.textContent = 'パスワードが違います。';
+    document.getElementById('auth-pw').value = '';
+    document.getElementById('auth-pw').focus();
+    setTimeout(() => err.textContent = '', 2500);
+  }
+}
+
+function changePassword() {
+  const master = document.getElementById('admin-master-pw').value;
+  const newPw = document.getElementById('admin-new-pw').value.trim();
+  const msg = document.getElementById('admin-msg');
+  if (master !== MASTER_PW) {
+    msg.style.color = '#ff7a7a';
+    msg.textContent = '管理者パスワードが違います。';
+    setTimeout(() => msg.textContent = '', 2500);
+    return;
+  }
+  if (newPw.length < 4) {
+    msg.style.color = '#ff7a7a';
+    msg.textContent = '4文字以上で入力してください。';
+    return;
+  }
+  localStorage.setItem('invite_pw', newPw);
+  document.getElementById('admin-cur-pw').value = newPw;
+  document.getElementById('admin-new-pw').value = '';
+  document.getElementById('admin-master-pw').value = '';
+  msg.style.color = 'var(--gold)';
+  msg.textContent = '✅ パスワードを更新しました！';
+  setTimeout(() => msg.textContent = '', 3000);
+}
+
+function toggleAdmin() {
+  document.getElementById('admin-popup').classList.toggle('open');
+}
+
+function checkAuth() {
+  if (sessionStorage.getItem('auth_ok') === '1') {
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('admin-panel').style.display = 'block';
+    document.getElementById('admin-cur-pw').value = getInvitePW();
+  } else {
+    document.getElementById('auth-pw').focus();
+  }
+}
+
+// ─────────────────────────────────────
+//  TOAST
+// ─────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// ─────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────
+checkAuth();
+initUser();
+renderQuiz();
+</script>
+</body>
+</html>
